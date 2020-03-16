@@ -34,7 +34,7 @@ usethis::use_lifecycle_badge( "Experimental" )
 usethis::use_news_md( open = FALSE )
 usethis::use_git()
 
-## 1.3 - Add a data-raw folder
+1## 1.3 - Add a data-raw folder
 ## 
 ## If you have data in your package
 usethis::use_data_raw( name = "my_dataset", open = FALSE ) # Change "my_dataset"
