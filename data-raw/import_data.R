@@ -70,7 +70,7 @@ group_by(country, time_series) %>% arrange(date_rep) %>% mutate(value_cum = cums
 #
 # WHO sitrep
 # R package but failed at installation last time so
-# I just cloned the reporting and sync every day: 	https://github.com/CSSEGISandData/COVID-19
+# I just cloned the reporting and sync every day: https://github.com/eebrown/data2019nCoV
 # the data is stored as an R object
 load(path(dir_data_who, "sarscov2_who_2019.rda"))
 
