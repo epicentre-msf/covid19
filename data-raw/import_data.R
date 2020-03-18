@@ -14,10 +14,6 @@ library(writexl)
 
 dir_data <- here::here("data-raw")
 
-# TODO: edit path see comments below
-dir_data_jhu <- "COVID-19/csse_covid_19_data/csse_covid_19_time_series"
-dir_data_who <- "data2019nCoV/data"
-
 # ==========================================================================
 # Read data
 # ==========================================================================
@@ -42,12 +38,15 @@ group_by(country, time_series) %>% arrange(date_rep) %>% mutate(value_cum = cums
 # I just cloned their data repo and sync every day: 	https://github.com/CSSEGISandData/COVID-19
 # data stored as csv
 
-df_data_jhu_conf <- read_csv(path(dir_data_jhu, "time_series_19-covid-Confirmed.csv")) %>%
+jhu_conf_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
+jhu_death_url <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv"
+
+df_data_jhu_conf <- read_csv(jhu_conf_url) %>% 
 rename(province_state = `Province/State`, country_region = `Country/Region`, lat = Lat, long = Long) %>% 
 pivot_longer(cols = -c(province_state, country_region, lat, long), names_to = "date_rep", values_to = "value_cum") %>% 
 mutate(time_series = "n_cases")
 
-df_data_jhu_death <- read_csv(path(dir_data_jhu, "time_series_19-covid-Deaths.csv")) %>%
+df_data_jhu_death <- read_csv(jhu_death_url) %>%
 rename(province_state = `Province/State`, country_region = `Country/Region`, lat = Lat, long = Long) %>% 
 pivot_longer(cols = -c(province_state, country_region, lat, long), names_to = "date_rep", values_to = "value_cum") %>% 
 mutate(time_series = "n_deaths")
@@ -72,7 +71,10 @@ group_by(country, time_series) %>% arrange(date_rep) %>% mutate(value_cum = cums
 # R package but failed at installation last time so
 # I just cloned the reporting and sync every day: 	https://github.com/CSSEGISandData/COVID-19
 # the data is stored as an R object
-load(path(dir_data_who, "sarscov2_who_2019.rda"))
+
+who_url <- "https://raw.githubusercontent.com/eebrown/data2019nCoV/master/data/sarscov2_who_2019.rda"
+download.file(who_url, destfile = here::here("data-raw/sarscov2_who_2019.rda"))
+load(here::here("data-raw/sarscov2_who_2019.rda"))
 
 df_data_who <- sarscov2_who_2019 %>% as_tibble %>% select(date_rep = date, starts_with("cases"), starts_with("deaths")) %>% 
 pivot_longer(
