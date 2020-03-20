@@ -26,12 +26,13 @@ dir_data <- here::here("data-raw")
 # I put several examples in data-raw so you can see it changed
 
 # this doesn't seem to be working :(
-# ecdc_url <- glue::glue("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-{Sys.Date()}.xls")
-# download.file(ecdc_url, destfile = here::here("data-raw/ecdc_data.xlsx"))
+ecdc_url <- glue::glue("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-{Sys.Date()-1}.xls")
+xltest <- gdata::read.xls(ecdc_url)
+download.file(ecdc_url, destfile = here::here("data-raw/ecdc_data.xls"))
 
 file_data_ecdc <- dir_ls(path(dir_data, "ecdc"), regexp = "COVID-19-geographic-disbtribution-worldwide-") %>% max()
 
-df_data_ecdc <- read_excel(file_data_ecdc) %>%
+df_data_ecdc <- read_excel(here::here("data-raw/ecdc_data.xlsx")) %>%
   janitor::clean_names() %>%
   mutate(
     date_rep = as.Date(date_rep), 
@@ -173,5 +174,8 @@ df_data_who <- sarscov2_who_2019 %>%
 # Lockdown
 # Manual file but I'm sure there is someone somewhere who is summarizing this information
 
-df_data_intervention <- read_excel(path(dir_data, "data_intervention.xlsx")) %>% mutate_at(vars(starts_with("date")), as.Date)
+#df_data_intervention <- read_excel(path(dir_data, "data_intervention.xlsx")) %>% mutate_at(vars(starts_with("date")), as.Date)
 
+interventions_url <- "https://data.humdata.org/dataset/e1a91ae0-292d-4434-bc75-bf863d4608ba/resource/8a98c9cd-2c49-41fb-9a8e-6c76821c4d72/download/20200317-acaps-covid-19_goverment-measures-dataset.xlsx"
+download.file(interventions_url, destfile = here::here("data-raw/interventions.xlsx"))
+df_data_intervention <- readxl::read_excel(here::here("data-raw/interventions.xlsx"), sheet = "Database")
