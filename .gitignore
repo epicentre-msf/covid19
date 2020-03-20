@@ -2,3 +2,5 @@
 .RData
 .Rproj.user
 .DS_Store
+.cache
+data-raw/shps
