@@ -1,7 +1,13 @@
 Package: covid19
 Title: Epidemiological covid-19 analysis and visualisation
 Version: 0.0.0.9000
-Authors@R: person('Anton', 'Camacho', email = 'anton.camacho@epicentre.msf.org', role = c('cre', 'aut'))
+Authors@R: Authors@R: c(
+  person("Anton", "Camacho", role = c("cre", "aut"), email = "anton.camacho@epicentre.msf.org"),
+  person("Paul", "Campbell", role = c("aut"), email = "paul.campbell@epicentre.msf.org"),
+  person("Mathilde", "Mousset", role = c("aut"), email = "mathilde.mousset@epicentre.msf.org"),
+  person("Flavio", "Finger", role = c("aut"), email = "flavio.finger@epicentre.msf.org"),
+  person("Patrick", "Barks", role = c("aut"), email = "patrick.barks@epicentre.msf.org")
+)
 Description: Repo for Epicentre's analysis of the covid-19 pandemic.
 License: What license is it under?
 Encoding: UTF-8
