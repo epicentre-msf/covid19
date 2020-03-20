@@ -29,4 +29,16 @@ iran_adm0 <- st_read(dsn = "./data-raw/shapefiles/iran/irn_adm_unhcr_20190514_sh
 
 iran_adm1 <- st_read(dsn = "./data-raw/shapefiles/iran/irn_adm_unhcr_20190514_shp/irn_admbnda_adm1_unhcr_20190514.shp")
 
-# Note : the next lower level is also there (irn_admbnda_adm2_unhcr_20190514.shp)
+# Note : the next lower level is also there (irn_admbnda_adm2_unhcr_20190514.shp) 
+
+
+# Afghanistan -------------------------------------------------------------
+
+# https://www.diva-gis.org/gdata
+# If does not work well, we can try this link as well : https://data.humdata.org/dataset/afg-admin-boundaries
+
+afghanistan_adm0 <- st_read(dsn = "./data-raw/shapefiles/afghanistan/AFG_adm/AFG_adm0.shp")
+
+afghanistan_adm1 <- st_read(dsn = "./data-raw/shapefiles/afghanistan/AFG_adm/AFG_adm1.shp")
+
+# The lower level is also in the file
