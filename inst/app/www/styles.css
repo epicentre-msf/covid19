@@ -1,0 +1,28 @@
+.tab-content {
+    margin-top: 60px;
+}
+/*
+@media only screen and (min-width : 320px) {
+  .tab-content {
+    margin-top: 140px;
+  }
+}
+@media only screen and (min-width: 768px) {
+  .tab-content {
+    margin-top: 60px;
+  }
+}
+*/
+.selectize-dropdown {
+  z-index: 10000
+}
+
+.small, small {
+  font-size: 60%;
+}
+
+#map_1-map {
+  height: 600px !important;
+  height: 75vh !important;
+  min-height: 400px;
+}

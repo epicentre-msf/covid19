@@ -1,20 +1,27 @@
 Package: covid19
 Title: Epidemiological covid-19 analysis and visualisation
 Version: 0.0.0.9000
-Authors@R: Authors@R: c(
+Authors@R: c(
   person("Anton", "Camacho", role = c("cre", "aut"), email = "anton.camacho@epicentre.msf.org"),
   person("Paul", "Campbell", role = c("aut"), email = "paul.campbell@epicentre.msf.org"),
   person("Mathilde", "Mousset", role = c("aut"), email = "mathilde.mousset@epicentre.msf.org"),
   person("Flavio", "Finger", role = c("aut"), email = "flavio.finger@epicentre.msf.org"),
-  person("Patrick", "Barks", role = c("aut"), email = "patrick.barks@epicentre.msf.org")
-)
+  person("Patrick", "Barks", role = c("aut"), email = "patrick.barks@epicentre.msf.org"))
 Description: Repo for Epicentre's analysis of the covid-19 pandemic.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    shiny, 
-    golem
-RoxygenNote: 6.1.0
+    shiny,
+    golem,
+    waiter,
+    leaflet,
+    dplyr,
+    readxl,
+    readr,
+    purrr,
+    sf,
+    htmltools
+RoxygenNote: 6.1.1
 URL: https://github.com/epicentre-msf/covid19
 BugReports: https://github.com/epicentre-msf/covid19/issues
