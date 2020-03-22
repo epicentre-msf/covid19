@@ -5,9 +5,9 @@
 \alias{mod_map_server}
 \title{mod_map_ui and mod_map_server}
 \usage{
-mod_map_ui(id, df_interventions)
+mod_map_ui(id)
 
-mod_map_server(input, output, session, df_interventions)
+mod_map_server(input, output, session)
 }
 \arguments{
 \item{id}{shiny id}

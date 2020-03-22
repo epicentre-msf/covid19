@@ -22,7 +22,7 @@
 }
 
 #map_1-map {
-  height: 600px !important;
-  height: 75vh !important;
+  height: 400px !important;
+  height: 45vh !important;
   min-height: 400px;
 }

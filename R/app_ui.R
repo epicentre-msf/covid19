@@ -1,25 +1,25 @@
 #' @import shiny
 app_ui <- function() {
   # load data files
-  data_dir <- golem::get_golem_options("data_dir")
-  df_interventions <- readxl::read_excel(
-    fs::path(data_dir, "interventions", "interventions.xlsx"),
-    sheet = "Database"
-  ) %>% 
-    dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date)
+  # data_dir <- golem::get_golem_options("data_dir")
+  # df_interventions <- readxl::read_excel(
+  #   fs::path(data_dir, "interventions", "interventions.xlsx"),
+  #   sheet = "Database"
+  # ) %>% 
+  #   dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date)
   
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # List the first level UI elements here 
     navbarPage(
-      title = tagList("NCovid19 Epi Dashboard"),
+      title = tagList("COVID-19 EpiDS Dashboard"),
       windowTitle = "NCovid19 Epi Dashboard",
       position = "fixed-top",
       collapsible = TRUE,
       
       # tabs 
-      tabPanel("Map", mod_map_ui("map_1", df_interventions = df_interventions))
+      tabPanel("Global overview", mod_map_ui("map_1"))
       #tabPanel("Epicurves", mod_facet_ui("facet_1", surveillance_df = surveillance_df)),
       
       # footer = tagList(

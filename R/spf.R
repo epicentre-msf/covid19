@@ -14,6 +14,35 @@
 
 # SPF: Santé Publique France
 
+# sf_fr <- rnaturalearth::ne_states(geounit = "france", returnclass = "sf")
+# sf_it <- rnaturalearth::ne_states(geounit = "italy", returnclass = "sf")
+# 
+# plot(sf_it$geometry)
+# 
+# spf_url <- "https://raw.githubusercontent.com/opencovid19-fr/data/master/dist/chiffres-cles.csv"
+# 
+# df_spf <- read_csv(spf_url)
+# 
+# df_spf %>% 
+#   distinct(granularite, maille_nom) %>% 
+#   arrange(granularite, maille_nom) %>% 
+#   View()
+# 
+# 
+# it_url <- "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-province/dpc-covid19-ita-province.csv"
+# 
+# df_it <- read_csv(it_url) %>% 
+#   drop_na(sigla_provincia) %>% 
+#   left_join(select(sf_it, name, postal), by = c(sigla_provincia = "postal"))
+#   
+# left_join(select(df_it, denominazione_provincia, sigla_provincia), 
+#           select(sf_it, name, postal), 
+#           by = c(sigla_provincia = "postal")) %>% 
+#   filter(is.na(name)) %>% 
+#   View()
+# 
+# setdiff(df_it$sigla_provincia, sf_it$postal)
+
 # get_spf_cases <- function(level = c("national", "regional")) {
 # 
 #   level <- match.arg(level, several.ok = FALSE)

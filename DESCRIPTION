@@ -17,11 +17,19 @@ Imports:
     waiter,
     leaflet,
     dplyr,
+    tidyr,
     readxl,
     readr,
+    stringr,
+    scales,
+    glue,
     purrr,
     sf,
-    htmltools
+    htmltools,
+    countrycode,
+    highcharter,
+    NCoVUtils,
+    pkgload
 RoxygenNote: 6.1.1
 URL: https://github.com/epicentre-msf/covid19
 BugReports: https://github.com/epicentre-msf/covid19/issues

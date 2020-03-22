@@ -141,8 +141,8 @@ df_data_spf_regions <- spf_ls %>%
 # the data is stored as an R object
 
 who_url <- "https://raw.githubusercontent.com/eebrown/data2019nCoV/master/data/sarscov2_who_2019.rda"
-download.file(who_url, destfile = here::here("data-raw/sarscov2_who_2019.rda"))
-load(here::here("data-raw/sarscov2_who_2019.rda"))
+download.file(who_url, destfile = here::here("data-raw/who/sarscov2_who_2019.rda"))
+load(here::here("data-raw/who/sarscov2_who_2019.rda"))
 
 df_data_who <- sarscov2_who_2019 %>%
   as_tibble() %>%
@@ -177,5 +177,10 @@ df_data_who <- sarscov2_who_2019 %>%
 #df_data_intervention <- read_excel(path(dir_data, "data_intervention.xlsx")) %>% mutate_at(vars(starts_with("date")), as.Date)
 
 interventions_url <- "https://data.humdata.org/dataset/e1a91ae0-292d-4434-bc75-bf863d4608ba/resource/8a98c9cd-2c49-41fb-9a8e-6c76821c4d72/download/20200317-acaps-covid-19_goverment-measures-dataset.xlsx"
-download.file(interventions_url, destfile = here::here("data-raw/interventions.xlsx"))
-df_data_intervention <- readxl::read_excel(here::here("data-raw/interventions.xlsx"), sheet = "Database")
+interventions_path <- here::here("data-raw/interventions/interventions.xlsx")
+
+curl::curl_download(interventions_url, destfile = interventions_path)
+
+df_data_intervention <- readxl::read_excel(interventions_path, sheet = "Database") %>% 
+  janitor::clean_names() %>% 
+  mutate_if(lubridate::is.POSIXct, lubridate::as_date)
