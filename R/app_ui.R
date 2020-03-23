@@ -14,7 +14,7 @@ app_ui <- function() {
     # List the first level UI elements here 
     navbarPage(
       title = tagList("COVID-19 EpiDS Dashboard"),
-      windowTitle = "NCovid19 Epi Dashboard",
+      windowTitle = "COVID-19 EpiDS Dashboard",
       position = "fixed-top",
       collapsible = TRUE,
       
@@ -47,7 +47,7 @@ golem_add_external_resources <- function(){
  
   tags$head(
     golem::activate_js(),
-    golem::favicon(),
+    golem::favicon("www/favicon.png"),
     waiter::use_waiter(include_js = FALSE),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css")
     # Add here all the external resources
