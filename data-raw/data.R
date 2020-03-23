@@ -12,4 +12,3 @@ data_updated <- Sys.time()
 
 usethis::use_data(df_interventions, df_ecdc, df_who, data_updated, overwrite = TRUE)
 
-system("touch restart.txt")
