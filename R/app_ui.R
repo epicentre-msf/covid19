@@ -13,7 +13,7 @@ app_ui <- function() {
     golem_add_external_resources(),
     # List the first level UI elements here 
     navbarPage(
-      title = tagList("COVID-19 EpiDS Dashboard"),
+      title = tagList("COVID-19 EpiDS Dashboard", tags$small(paste("data updated", data_updated))),
       windowTitle = "COVID-19 EpiDS Dashboard",
       position = "fixed-top",
       collapsible = TRUE,
