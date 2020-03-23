@@ -17,9 +17,9 @@ mod_map_ui <- function(id){
   ns <- NS(id)
   
   region_selects <- dplyr::bind_rows(
-      all_continents,
-      dplyr::distinct(sf_world %>% sf::st_set_geometry(NULL), continent, region)
-    )
+    all_continents,
+    dplyr::distinct(sf_world %>% sf::st_set_geometry(NULL), continent, region)
+  )
   region_selects <- c("Worldwide", split(region_selects$region, region_selects$continent))
   
   tagList(
@@ -130,6 +130,7 @@ mod_map_server <- function(input, output, session){
     if(map_click()) {
       map_click(FALSE)
     } else {
+      updateSelectInput(session, "region", selected = "Worldwide")
       region_select(input$region)
       #region_type("region")
     }
@@ -205,7 +206,7 @@ mod_map_server <- function(input, output, session){
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
       dplyr::inner_join(dplyr::select(sf_world, iso_a3, lon, lat), by = c("iso_a3")) %>% 
       sf::st_as_sf()
-      
+    
     return(df)
   })
   
@@ -300,7 +301,7 @@ mod_map_server <- function(input, output, session){
           group = "Interventions"
         )
     }
-
+    
     w$hide()
   })
   
@@ -383,10 +384,10 @@ mod_map_server <- function(input, output, session){
         ) %>% 
         flyToBounds(bbox[["xmin"]], bbox[["ymin"]], bbox[["xmax"]], bbox[["ymax"]])
     }
-
+    
   })
   
-
+  
   output$epicurve <- renderHighchart({
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
@@ -400,14 +401,31 @@ mod_map_server <- function(input, output, session){
     y_lab <- stringr::str_to_title(input$indicator)
     
     hchart(df, type = "column", hcaes(date, !!ind), name = input$indicator) %>% 
+      hc_chart(zoomType = "x") %>% 
       hc_title(text = title) %>% 
       hc_subtitle(text = "Click country on map to filter") %>% 
-      hc_xAxis(title = list(text = "")) %>% 
-      hc_yAxis(title = list(text = y_lab), allowDecimals = FALSE) %>%
+      hc_xAxis(
+        title = list(text = ""), 
+        min = datetime_to_timestamp(as.Date(input$time_period[1])),
+        max = datetime_to_timestamp(as.Date(input$time_period[2]))
+      ) %>% 
+      hc_yAxis_multiples(
+        list(
+          title = list(text = y_lab), 
+          allowDecimals = FALSE
+        ),
+        list(
+          title = list(text = y_lab), 
+          allowDecimals = FALSE,
+          opposite = TRUE,
+          linkedTo = 0
+        )
+      ) %>%
       hc_plotOptions(
         #series = list(stacking = stacking),
         column = list(groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
       ) %>%
+      #hc_rangeSelector(verticalAlign = "bottom") %>% 
       hc_colors("steelblue") %>% 
       hc_add_theme(hc_theme_smpl())
   })
