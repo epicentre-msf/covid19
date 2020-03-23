@@ -1,3 +1,9 @@
+if (Sys.info()["nodename"] == "vps709766") {
+  setwd("/srv/shiny-server/covid19")
+} else {
+  setwd(here::here())
+}
+
 pkgload::load_all()
 
 NCoVUtils::reset_cache(refresh_data = FALSE)
@@ -12,3 +18,4 @@ data_updated <- Sys.time()
 
 usethis::use_data(df_interventions, df_ecdc, df_who, data_updated, overwrite = TRUE)
 
+system("touch restart.txt")
