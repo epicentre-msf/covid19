@@ -75,6 +75,7 @@ get_who_data <- function() {
            continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
            region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
            source = "WHO") %>% 
+    dplyr::filter(!iso_a3 %in% c("GLOBAL", "INTERNATIONALCONVEYANCE")) %>% 
     dplyr::select(date, country:region, dplyr::everything())
 }
 
