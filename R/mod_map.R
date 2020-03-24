@@ -28,7 +28,7 @@ mod_map_ui <- function(id){
         selectInput(
           ns("source"), 
           "Data source", 
-          choices = c("ECDC"),
+          choices = c("ECDC", "WHO"),
           width = "100%"
         )
       ),
@@ -63,7 +63,7 @@ mod_map_ui <- function(id){
         selectInput(
           ns("intervention"),
           "Interventions",
-          choices = c("Highlight national interventions" = "", sort(unique(df_interventions$measure))),
+          choices = c("Highlight government interventions" = "", sort(unique(df_interventions$measure))),
           width = "100%"
         )
       )
@@ -107,7 +107,7 @@ mod_map_server <- function(input, output, session){
   ns <- session$ns
   
   w <- waiter::Waiter$new(
-    id = ns("map"),
+    #id = c(ns("epicurve"), ns("cumulative")),
     html = waiter::spin_3(), 
     color = waiter::transparent(.5)
   )
@@ -138,7 +138,6 @@ mod_map_server <- function(input, output, session){
     map_click(TRUE)
     iso <- stringr::str_remove(input$map_marker_click$id, "_mrkr")
     region_select(iso)
-    #region_type("country")
   })
   
   observeEvent(input$map_click, {
@@ -146,8 +145,7 @@ mod_map_server <- function(input, output, session){
       map_click(FALSE)
     } else {
       updateSelectInput(session, "region", selected = "Worldwide")
-      region_select(input$region)
-      #region_type("region")
+      region_select("Worldwide")
     }
   })
   
@@ -227,6 +225,8 @@ mod_map_server <- function(input, output, session){
   
   df_epicurve <- reactive({
     
+    #w$show()
+    
     df <- df_data()
     ind <- rlang::sym(input$indicator)
     
@@ -236,7 +236,7 @@ mod_map_server <- function(input, output, session){
         date >= input$time_period[1],
         date <= input$time_period[2]
       ) %>% 
-      tidyr::drop_na(iso_a3) %>% 
+      tidyr::drop_na(iso_a3, {{ind}}) %>% 
       dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ind}})) %>% 
       dplyr::group_by(date, country) %>% 
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
@@ -308,7 +308,6 @@ mod_map_server <- function(input, output, session){
         )
     }
     
-    w$hide()
   })
   
   observe({
@@ -398,6 +397,8 @@ mod_map_server <- function(input, output, session){
   })
   
   output$epicurve <- renderHighchart({
+    #w$show()
+    
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
     
@@ -431,6 +432,7 @@ mod_map_server <- function(input, output, session){
         column = list(groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
       ) %>% 
       hc_legend(
+        #title = list(text = "Top 9 + other"),
         layout = "vertical",
         align = "right",
         verticalAlign = "top",
@@ -439,21 +441,48 @@ mod_map_server <- function(input, output, session){
       )
     
     # if (region_type() == "country") {
-    #   df_int <- df_interventions %>% 
-    #     dplyr::filter(iso == region_select()) %>% 
-    #     dplyr::mutate(y = max(df[[input$indicator]], na.rm = TRUE)) %>% 
-    #     dplyr::select(x = date_implemented, y, group = measure)
-    #   #browser()
-    #   p <- p %>% 
-    #     hc_add_series_df(
-    #       data = df_int, type = "point", x = x, y = y, color = group
+    #   
+    #   lockdown_start <- df_interventions %>%
+    #     dplyr::filter(iso == region_select(), is.na(admin_level_name), measure == "General lockdown") %>%
+    #     dplyr::summarise(start = datetime_to_timestamp(min(date_implemented))) %>% 
+    #     dplyr::pull(start)
+    #   
+    #   lockdown_end <- datetime_to_timestamp(Sys.Date())
+    #   
+    #   p <- p %>%
+    #     hc_xAxis(
+    #       title = list(text = ""), 
+    #       min = datetime_to_timestamp(as.Date(input$time_period[1])),
+    #       max = datetime_to_timestamp(as.Date(input$time_period[2])),
+    #       plotBands = list(
+    #         # yellow band
+    #         list(
+    #           color = "#FCFFC550",
+    #           zIndex = 3,
+    #           from = lockdown_start,
+    #           to = lockdown_end
+    #         )
+    #       )
+    #     ) %>% 
+    #     hc_annotations(
+    #       list(
+    #         draggable = "",
+    #         labels = list(
+    #           list(point = list(x = lockdown_start, y = max(df[[input$indicator]], na.rm = TRUE),  xAxis = 0, yAxis = 0), 
+    #                text = "National lockdown", style = list(color = "black"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+    #         )
+    #       )
     #     )
     # }
-    # 
+
     return(p)
+    
+    #w$hide()
   })
   
   output$cumulative <- renderHighchart({
+    #w$show()
+    
     df <- df_epicurve() %>% 
       dplyr::group_by(country) %>% 
       dplyr::arrange(date) %>% 
@@ -466,7 +495,7 @@ mod_map_server <- function(input, output, session){
     y_lab <- stringr::str_to_title(input$indicator)
     y_type <- ifelse(input$log, "logarithmic", "linear")
     
-    hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
+    p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
       hc_chart(zoomType = "x") %>% 
       hc_title(text = title) %>% 
       hc_subtitle(text = "Click country on map to filter") %>% 
@@ -489,10 +518,18 @@ mod_map_server <- function(input, output, session){
           linkedTo = 0
         )
       ) %>%
-      hc_legend(layout = "proximate", align = "right") %>% 
+      hc_legend(
+        #title = list(text = "Top 9 + other"), 
+        layout = "proximate", 
+        align = "right"
+      ) %>% 
       hc_plotOptions(
         line = list(label = list(enabled = TRUE))
       )
+    
+    return(p)
+    
+    #w$hide()
   })
   
 }

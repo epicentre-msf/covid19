@@ -13,6 +13,12 @@ body  {
   }
 }
 */
+
+.nav-image {
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
 .selectize-dropdown {
   z-index: 10000
 }

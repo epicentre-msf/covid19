@@ -1,9 +1,4 @@
-
-# covid19
-
-<!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-<!-- badges: end -->
+## About
 
 ---
 
@@ -34,16 +29,3 @@ The tool is built using the R programming language and the shiny web framework. 
 #### Shapefiles
 
 [Natural Earth](https://www.naturalearthdata.com/)
-
-## To Dos
-
-- [x] Fix WHO data import and re-incorporate into dashboard
-- [x] Add about page
-- [x] Add epicentre + msf logos
-- [x] Add epicentre + msf logos
-- [ ] Add France sub-national analysis tab
-- [ ] Add Iran sub-national analysis tab
-- [ ] Add Afghanistan sub-national analysis tab
-
-
-

@@ -13,13 +13,24 @@ app_ui <- function() {
     golem_add_external_resources(),
     # List the first level UI elements here 
     navbarPage(
-      title = tagList("COVID-19 EpiDS Dashboard", tags$small(paste("data updated", data_updated))),
-      windowTitle = "COVID-19 EpiDS Dashboard",
+      title = tagList("COVID-19 Epi Dashboard", tags$small(paste("data updated", data_updated))),
+      windowTitle = "COVID-19 Epi Dashboard",
       position = "fixed-top",
       collapsible = TRUE,
       
       # tabs 
-      tabPanel("Global overview", mod_map_ui("map_1"))
+      tabPanel("Global overview", icon = icon("globe-africa"), mod_map_ui("map_1")),
+      
+      tabPanel(
+        value = "about",
+        title = icon("question-circle"), 
+        fluidRow(
+          col_8(
+            offset = 2,
+            includeMarkdown(system.file('app/www/about.md', package = 'covid19'))
+          )
+        )
+      )
       #tabPanel("Epicurves", mod_facet_ui("facet_1", surveillance_df = surveillance_df)),
       
       # footer = tagList(
@@ -49,7 +60,8 @@ golem_add_external_resources <- function(){
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
     waiter::use_waiter(include_js = FALSE),
-    tags$link(rel="stylesheet", type="text/css", href="www/styles.css")
+    tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
+    tags$script(src="www/addNavLink.js")
     # Add here all the external resources
     # If you have a custom.css in the inst/app/www
     # Or for example, you can add shinyalert::useShinyalert() here
