@@ -62,19 +62,21 @@ get_who_data <- function() {
       names_sep = "_",
       values_to = "value"
     ) %>%
-    dplyr::group_by(ind, iso_a3, region) %>%
+    dplyr::filter(is.na(region)) %>% # remove region level data
+    dplyr::select(-region) %>% 
+    dplyr::group_by(ind, iso_a3) %>%
     dplyr::arrange(date) %>%
     dplyr::mutate(value = c(value[1], diff(value))) %>%
     dplyr::ungroup() %>%
     dplyr::arrange(iso_a3, region, date, ind) %>%
     tidyr::pivot_wider(names_from = "ind", values_from = "value") %>% 
-    dplyr::filter(is.na(region)) %>% 
-    dplyr::select(-region) %>% 
-    dplyr::mutate(iso_a3 = stringr::str_to_upper(iso_a3), 
-           country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
-           continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
-           region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
-           source = "WHO") %>% 
+    dplyr::mutate(
+      iso_a3 = stringr::str_to_upper(iso_a3), 
+      country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
+      continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
+      source = "WHO"
+    ) %>% 
     dplyr::filter(!iso_a3 %in% c("GLOBAL", "INTERNATIONALCONVEYANCE")) %>% 
     dplyr::select(date, country:region, dplyr::everything())
 }

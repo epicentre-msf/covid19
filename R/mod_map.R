@@ -28,7 +28,7 @@ mod_map_ui <- function(id){
         selectInput(
           ns("source"), 
           "Data source", 
-          choices = c("ECDC", "WHO"),
+          choices = c("ECDC"),
           width = "100%"
         )
       ),
@@ -36,7 +36,7 @@ mod_map_ui <- function(id){
         selectInput(
           ns("region"), 
           "Region Focus", 
-          choices = region_selects, #c("All", "Asia", "Africa", "Europe", "Americas", "Oceania"),
+          choices = region_selects, 
           width = "100%"
         )
       ),
@@ -56,8 +56,6 @@ mod_map_ui <- function(id){
           max = Sys.Date(),
           start = min(df_ecdc$date, na.rm = TRUE),
           end = Sys.Date(),
-          #timeFormat = "%d/%m/%y",
-          #step = 1,
           width = "100%"
         )
       ),
@@ -70,12 +68,29 @@ mod_map_ui <- function(id){
         )
       )
     ),
+    
     fluidRow(
       col_12(
         leaflet::leafletOutput(ns("map"))
-      ),
+      )
+    ),
+    
+    tags$br(),
+    
+    fluidRow(
       col_12(
-        highcharter::highchartOutput(ns("epicurve"), height = 300)
+        tabsetPanel(
+          tabPanel(
+            "Daily", icon =icon("bar-chart"),
+            col_12(textOutput(ns("epicurve_title"))),
+            col_12(highcharter::highchartOutput(ns("epicurve"), height = 300))
+          ),
+          tabPanel(
+            "Cumulative", icon =icon("line-chart"),
+            col_12(checkboxInput(ns("log"), label = "log scale", value = FALSE)),
+            col_12(highcharter::highchartOutput(ns("cumulative"), height = 300))
+          )
+        )
       )
     )
   )
@@ -212,29 +227,20 @@ mod_map_server <- function(input, output, session){
   
   df_epicurve <- reactive({
     
-    req(length(input$time_period) == 2)
-    
     df <- df_data()
-    
-    r_type <- region_type()
-    
-    if (r_type != "global") {
-      if (r_type == "continent") {
-        df <- df %>% dplyr::filter(continent == region_select())
-      } else if (r_type == "region") {
-        df <- df %>% dplyr::filter(region == region_select())
-      } else if (r_type == "country") {
-        df <- df %>% dplyr::filter(iso_a3 == region_select())
-      }
-    }
+    ind <- rlang::sym(input$indicator)
     
     df <- df %>% 
+      filter_geo(r_filter = region_select(), r_type = region_type(), to_country = TRUE) %>% 
       dplyr::filter(
         date >= input$time_period[1],
         date <= input$time_period[2]
       ) %>% 
-      dplyr::group_by(date) %>% 
-      dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
+      tidyr::drop_na(iso_a3) %>% 
+      dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ind}})) %>% 
+      dplyr::group_by(date, country) %>% 
+      dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
+      dplyr::ungroup()
     
     return(df)
   })
@@ -245,10 +251,10 @@ mod_map_server <- function(input, output, session){
     
     leaflet() %>%
       addMapPane(name = "polygons", zIndex = 410) %>%
-      addMapPane(name = "choropleth", zIndex = 410) %>%
-      addMapPane(name = "borders", zIndex = 420) %>%
-      addMapPane(name = "circles", zIndex = 430) %>%
-      addMapPane(name = "place_labels", zIndex = 440) %>%
+      addMapPane(name = "choropleth", zIndex = 420) %>%
+      addMapPane(name = "borders", zIndex = 430) %>%
+      addMapPane(name = "circles", zIndex = 440) %>%
+      addMapPane(name = "place_labels", zIndex = 450) %>%
       addProviderTiles("CartoDB.PositronNoLabels", group = "No Labels") %>%
       addProviderTiles("CartoDB.PositronNoLabels", group = "Labels") %>%
       addProviderTiles("CartoDB.PositronOnlyLabels", group = "Labels", 
@@ -387,20 +393,18 @@ mod_map_server <- function(input, output, session){
     
   })
   
+  region_lab <- reactive({
+    ifelse(region_type() == "country", names(country_iso[country_iso == region_select()]), region_select())
+  })
   
   output$epicurve <- renderHighchart({
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
     
-    if (region_type() == "country") {
-      title = paste(names(country_iso[country_iso == region_select()]), "daily", input$indicator)
-    } else {
-      title = paste(region_select(), "daily", input$indicator)
-    }
-    
+    title <- paste(region_lab(), "daily", input$indicator)
     y_lab <- stringr::str_to_title(input$indicator)
     
-    hchart(df, type = "column", hcaes(date, !!ind), name = input$indicator) %>% 
+    p <- hchart(df, type = "column", hcaes(date, !!ind, group = country)) %>% # name = input$indicator
       hc_chart(zoomType = "x") %>% 
       hc_title(text = title) %>% 
       hc_subtitle(text = "Click country on map to filter") %>% 
@@ -412,6 +416,7 @@ mod_map_server <- function(input, output, session){
       hc_yAxis_multiples(
         list(
           title = list(text = y_lab), 
+          #stackLabels = list(enabled = TRUE, align = "center"),
           allowDecimals = FALSE
         ),
         list(
@@ -422,12 +427,72 @@ mod_map_server <- function(input, output, session){
         )
       ) %>%
       hc_plotOptions(
-        #series = list(stacking = stacking),
+        series = list(stacking = "normal"),
         column = list(groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
+      ) %>% 
+      hc_legend(
+        layout = "vertical",
+        align = "right",
+        verticalAlign = "top",
+        x = -10,
+        y = 40
+      )
+    
+    # if (region_type() == "country") {
+    #   df_int <- df_interventions %>% 
+    #     dplyr::filter(iso == region_select()) %>% 
+    #     dplyr::mutate(y = max(df[[input$indicator]], na.rm = TRUE)) %>% 
+    #     dplyr::select(x = date_implemented, y, group = measure)
+    #   #browser()
+    #   p <- p %>% 
+    #     hc_add_series_df(
+    #       data = df_int, type = "point", x = x, y = y, color = group
+    #     )
+    # }
+    # 
+    return(p)
+  })
+  
+  output$cumulative <- renderHighchart({
+    df <- df_epicurve() %>% 
+      dplyr::group_by(country) %>% 
+      dplyr::arrange(date) %>% 
+      dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>% 
+      dplyr::ungroup()
+      
+    ind <- rlang::sym(input$indicator)
+    
+    title <- paste(region_lab(), "cumulative", input$indicator)
+    y_lab <- stringr::str_to_title(input$indicator)
+    y_type <- ifelse(input$log, "logarithmic", "linear")
+    
+    hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
+      hc_chart(zoomType = "x") %>% 
+      hc_title(text = title) %>% 
+      hc_subtitle(text = "Click country on map to filter") %>% 
+      hc_xAxis(
+        title = list(text = ""), 
+        min = datetime_to_timestamp(as.Date(input$time_period[1])),
+        max = datetime_to_timestamp(as.Date(input$time_period[2]))
+      ) %>% 
+      hc_yAxis_multiples(
+        list(
+          title = list(text = y_lab), 
+          allowDecimals = FALSE,
+          type = y_type
+        ),
+        list(
+          title = list(text = y_lab), 
+          allowDecimals = FALSE,
+          type = y_type,
+          opposite = TRUE,
+          linkedTo = 0
+        )
       ) %>%
-      #hc_rangeSelector(verticalAlign = "bottom") %>% 
-      hc_colors("steelblue") %>% 
-      hc_add_theme(hc_theme_smpl())
+      hc_legend(layout = "proximate", align = "right") %>% 
+      hc_plotOptions(
+        line = list(label = list(enabled = TRUE))
+      )
   })
   
 }

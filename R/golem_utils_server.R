@@ -99,3 +99,15 @@ break_text_html <- function(text, width = 25, exdent = 4) {
   stringr::str_wrap(text, width = width, exdent = exdent) %>% 
     stringr::str_replace_all("\\\n", "<br>")
 }
+
+filter_geo <- function(df, r_filter, r_type, to_country = FALSE) {
+  #browser()
+  if (r_type == "continent") {
+    df <- df %>% dplyr::filter(continent == r_filter)
+  } else if (r_type == "region") {
+    df <- df %>% dplyr::filter(region == r_filter)
+  } else if (r_type == "country" & to_country) {
+    df <- df %>% dplyr::filter(iso_a3 == r_filter)
+  }
+  return(df)
+}

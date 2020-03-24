@@ -1,5 +1,5 @@
-.tab-content {
-    margin-top: 60px;
+body  {
+  margin-top: 60px;
 }
 /*
 @media only screen and (min-width : 320px) {
@@ -23,6 +23,6 @@
 
 #map_1-map {
   height: 400px !important;
-  height: 45vh !important;
+  height: 40vh !important;
   min-height: 400px;
 }
