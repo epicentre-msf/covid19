@@ -19,6 +19,15 @@ body  {
   padding-bottom: 5px !important;
 }
 
+.box-title .form-group{
+  margin-bottom: 0 !important;
+}
+
+.checkbox{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 .selectize-dropdown {
   z-index: 10000
 }

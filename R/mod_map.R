@@ -78,21 +78,26 @@ mod_map_ui <- function(id){
     tags$br(),
     
     fluidRow(
-      col_12(
-        tabsetPanel(
-          tabPanel(
-            "Daily", icon =icon("bar-chart"),
-            col_12(textOutput(ns("epicurve_title"))),
-            col_12(highcharter::highchartOutput(ns("epicurve"), height = 300))
-          ),
-          tabPanel(
-            "Cumulative", icon =icon("line-chart"),
-            col_12(checkboxInput(ns("log"), label = "log scale", value = FALSE)),
-            col_12(highcharter::highchartOutput(ns("cumulative"), height = 300))
-          )
+      col_6(
+        shinydashboard::box(
+          title = tags$b(shiny::textOutput(ns("epicurve_title"))),
+          width = NULL, solidHeader = TRUE,
+          highcharter::highchartOutput(ns("epicurve"), height = 300)
+        )
+      ),
+      
+      col_6(
+        shinydashboard::box(
+          title = tagList(tags$span(
+            tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"), 
+            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), class = "text-right", style = "display: inline-block;")
+          )),
+          width = NULL, solidHeader = TRUE, 
+          highcharter::highchartOutput(ns("cumulative"), height = 300)
         )
       )
     )
+    
   )
 }
 
@@ -396,19 +401,28 @@ mod_map_server <- function(input, output, session){
     ifelse(region_type() == "country", names(country_iso[country_iso == region_select()]), region_select())
   })
   
+  output$epicurve_title <- renderText({
+    paste(region_lab(), "daily", input$indicator)
+  })
+  
+  output$cumulative_title <- renderText({
+    paste(region_lab(), "cumulative", input$indicator)
+  })
+  
   output$epicurve <- renderHighchart({
     #w$show()
     
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
-    
+    #n_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+
     title <- paste(region_lab(), "daily", input$indicator)
     y_lab <- stringr::str_to_title(input$indicator)
     
     p <- hchart(df, type = "column", hcaes(date, !!ind, group = country)) %>% # name = input$indicator
       hc_chart(zoomType = "x") %>% 
-      hc_title(text = title) %>% 
-      hc_subtitle(text = "Click country on map to filter") %>% 
+      #hc_title(text = title) %>% 
+      #hc_subtitle(text = "Click country on map to filter") %>% 
       hc_xAxis(
         title = list(text = ""), 
         min = datetime_to_timestamp(as.Date(input$time_period[1])),
@@ -419,11 +433,13 @@ mod_map_server <- function(input, output, session){
           title = list(text = y_lab), 
           #stackLabels = list(enabled = TRUE, align = "center"),
           allowDecimals = FALSE
+          #max = n_max + (n_max*.1)
         ),
         list(
-          title = list(text = y_lab), 
+          title = list(text = ""), 
           allowDecimals = FALSE,
           opposite = TRUE,
+          #max = n_max + (n_max*.1),
           linkedTo = 0
         )
       ) %>%
@@ -497,8 +513,8 @@ mod_map_server <- function(input, output, session){
     
     p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
       hc_chart(zoomType = "x") %>% 
-      hc_title(text = title) %>% 
-      hc_subtitle(text = "Click country on map to filter") %>% 
+      #hc_title(text = title) %>% 
+      #hc_subtitle(text = "Click country on map to filter") %>% 
       hc_xAxis(
         title = list(text = ""), 
         min = datetime_to_timestamp(as.Date(input$time_period[1])),
@@ -511,7 +527,7 @@ mod_map_server <- function(input, output, session){
           type = y_type
         ),
         list(
-          title = list(text = y_lab), 
+          title = list(text = ""), 
           allowDecimals = FALSE,
           type = y_type,
           opposite = TRUE,
@@ -523,9 +539,13 @@ mod_map_server <- function(input, output, session){
         layout = "proximate", 
         align = "right"
       ) %>% 
-      hc_plotOptions(
-        line = list(label = list(enabled = TRUE))
-      )
+      hc_plotOptions(series = list(states = list(inactive = list(opacity = 0.2))))
+      # hc_plotOptions(
+      #   series = list(
+      #     states = list(inactive = list(opacity = 0.2))
+      #     #label = list(enabled = TRUE)
+      #   )
+      # )
     
     return(p)
     

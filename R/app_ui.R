@@ -62,7 +62,8 @@ golem_add_external_resources <- function(){
     shiny::includeHTML(system.file('app/www/add_meta.html', package = 'covid19')),
     waiter::use_waiter(include_js = FALSE),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
-    tags$script(src="www/addNavLink.js")
+    tags$script(src="www/addNavLink.js"),
+    shinyWidgets::useShinydashboard()
     # Add here all the external resources
     # If you have a custom.css in the inst/app/www
     # Or for example, you can add shinyalert::useShinyalert() here
