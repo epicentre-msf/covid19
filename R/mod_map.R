@@ -26,14 +26,6 @@ mod_map_ui <- function(id){
     fluidRow(
       col_2(
         selectInput(
-          ns("source"), 
-          "Data source", 
-          choices = c("ECDC", "WHO"),
-          width = "100%"
-        )
-      ),
-      col_2(
-        selectInput(
           ns("region"), 
           "Region Focus", 
           choices = region_selects, 
@@ -41,11 +33,33 @@ mod_map_ui <- function(id){
         )
       ),
       col_2(
-        selectInput(
+        # selectInput(
+        #   ns("source"), 
+        #   "Data source", 
+        #   choices = c("ECDC", "WHO"),
+        #   width = "100%"
+        # )
+        shinyWidgets::radioGroupButtons(
+          inputId = ns("source"), 
+          label = "Data source", 
+          choices = c("ECDC", "WHO"),
+          justified = TRUE,
+          size = "sm"
+        )
+      ),
+      col_2(
+        # selectInput(
+        #   ns("indicator"), 
+        #   "Indicator", 
+        #   choices = c("Cases" = "cases", "Deaths" = "deaths"),
+        #   width = "100%"
+        # )
+        shinyWidgets::radioGroupButtons(
           ns("indicator"), 
           "Indicator", 
           choices = c("Cases" = "cases", "Deaths" = "deaths"),
-          width = "100%"
+          justified = TRUE,
+          size = "sm"
         )
       ),
       col_2(
@@ -72,7 +86,10 @@ mod_map_ui <- function(id){
     fluidRow(
       col_12(
         leaflet::leafletOutput(ns("map"))
-      )
+      )#,
+      # col_4(
+      #   reactable::reactableOutput(ns("table"))
+      # )
     ),
     
     tags$br(),
@@ -88,10 +105,11 @@ mod_map_ui <- function(id){
       
       col_6(
         shinydashboard::box(
-          title = tagList(tags$span(
+          title = tagList(#tags$span(
             tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"), 
-            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), class = "text-right", style = "display: inline-block;")
-          )),
+            tags$div(style = "display: inline-block; padding-right: 10px;"),
+            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "display: inline-block;")
+          ),
           width = NULL, solidHeader = TRUE, 
           highcharter::highchartOutput(ns("cumulative"), height = 300)
         )
@@ -124,19 +142,16 @@ mod_map_server <- function(input, output, session){
   # reactive val boolean to indicate if a shape has been selected
   map_click <- reactiveVal(FALSE)
   region_select <- reactiveVal()
-  #region_type <- reactiveVal("global")
   
   # if region is selected from map, update map_click value and drop-down selected value
   observeEvent(input$region, {
     region_select(input$region)
-    #region_type("region")
   })
   
   # if region is selected from map, update region_select value
   observeEvent(input$map_shape_click$id, {
     map_click(TRUE)
     region_select(input$map_shape_click$id)
-    #region_type("country")
   })
   
   observeEvent(input$map_marker_click$id, {
@@ -180,14 +195,8 @@ mod_map_server <- function(input, output, session){
     df <- df_interventions %>% 
       dplyr::filter(
         measure == input$intervention, 
-        date_implemented >= input$time_period[1],
-        date_implemented <= input$time_period[2]
-      ) %>% 
-      dplyr::group_by(iso, measure) %>% 
-      dplyr::filter(date_implemented == max(date_implemented)) %>% 
-      dplyr::ungroup() %>% 
-      dplyr::left_join(sf_world, by = c("iso" = "iso_a3"), suffix = c("", ".y")) %>% 
-      sf::st_as_sf()
+        date_implemented >= input$time_period[1]
+      )
     
     if (input$region != "Worldwide") {
       if (input$region %in% continents) {
@@ -197,7 +206,17 @@ mod_map_server <- function(input, output, session){
       }
     }
     
-    return(df)
+    countries <- unique(df$iso)
+    
+    sf_df <- sf_world %>% dplyr::filter(iso_a3 %in% countries)
+    
+      # dplyr::group_by(iso, measure) %>% 
+      # dplyr::filter(date_implemented == max(date_implemented)) %>% 
+      # dplyr::ungroup() %>% 
+      # dplyr::left_join(sf_world, by = c("iso" = "iso_a3"), suffix = c("", ".y")) %>% 
+      # sf::st_as_sf()
+    
+    return(sf_df)
   })
   
   map_indicators <- reactive({
@@ -252,11 +271,29 @@ mod_map_server <- function(input, output, session){
   
   # Outputs ========================================================
   
+  # output$table <- reactable::renderReactable({
+  #   #df <- dplyr::select(df_interventions, date_implemented, country, measure)
+  #   reactable::reactable(
+  #     data = dplyr::select(
+  #       df_interventions, 
+  #       `Date implemented`= date_implemented, 
+  #       Country = country, 
+  #       Measure = measure
+  #     ),
+  #     height = 400,
+  #     details = function(index) {
+  #       comment <- df_interventions[index,]$comments
+  #       comment <- ifelse(is.na(comment), "no further details available", comment)
+  #       htmltools::div(style = "padding: 10px", paste("Details:", comment))
+  #     }
+  #   )
+  # })
+  
   output$map <- renderLeaflet({
     
     leaflet() %>%
-      addMapPane(name = "polygons", zIndex = 410) %>%
-      addMapPane(name = "choropleth", zIndex = 420) %>%
+      addMapPane(name = "choropleth", zIndex = 410) %>%
+      addMapPane(name = "polygons", zIndex = 420) %>%
       addMapPane(name = "borders", zIndex = 430) %>%
       addMapPane(name = "circles", zIndex = 440) %>%
       addMapPane(name = "place_labels", zIndex = 450) %>%
@@ -283,7 +320,7 @@ mod_map_server <- function(input, output, session){
     } else {
       dat <- map_interventions()
       
-      popup_cols <- c("country", "measure", "date_implemented", "comments")
+      #popup_cols <- c("country", "measure", "date_implemented", "comments")
       
       #browser()
       
@@ -297,8 +334,8 @@ mod_map_server <- function(input, output, session){
           weight = 1,
           fillColor = "red",
           fillOpacity = .4,
-          label = ~country,
-          popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
+          #label = ~country,
+          #popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
           highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
           group = "Interventions",
           options = pathOptions(pane = "choropleth")
