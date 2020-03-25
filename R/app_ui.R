@@ -59,6 +59,7 @@ golem_add_external_resources <- function(){
   tags$head(
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
+    shiny::includeHTML(system.file('app/www/add_meta.html', package = 'covid19')),
     waiter::use_waiter(include_js = FALSE),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
     tags$script(src="www/addNavLink.js")
