@@ -23,11 +23,29 @@ geo_ref <- countrycode::codelist_panel %>%
   dplyr::distinct() %>% 
   tibble::as_tibble()
 
-pal <- c("#4E79A7FF", "#A0CBE8FF", "#F28E2BFF", "#FFBE7DFF", "#59A14FFF", 
+pal20 <- c("#4E79A7FF", "#A0CBE8FF", "#F28E2BFF", "#FFBE7DFF", "#59A14FFF", 
          "#8CD17DFF", "#B6992DFF", "#F1CE63FF", "#499894FF", "#86BCB6FF", 
          "#E15759FF", "#FF9D9AFF", "#79706EFF", "#BAB0ACFF", "#D37295FF", 
          "#FABFD2FF", "#B07AA1FF", "#D4A6C8FF", "#9D7660FF", "#D7B5A6FF")
 
+
+hc_opts <- getOption("highcharter.chart")
+hc_opts$colors <- pal20
+
+fntfmly <- '"Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";'
+
 options(
-  highcharter.theme = highcharter::hc_theme_smpl(colors = pal)
+  highcharter.chart = hc_opts,
+  highcharter.theme =
+    hc_theme_smpl(
+      chart = list(
+        style = list(
+          fontFamily = fntfmly
+        )
+      ),
+      title = list(style = list(fontFamily = fntfmly)),
+      subtitle = list(style = list(fontFamily = fntfmly)),
+      #credits = list(style = list(fontFamily = fntfmly, fontSize = "12px", cursor = "default"), href=""),
+      plotOptions = list(line = list(marker = list(enabled = FALSE)))
+    )
 )

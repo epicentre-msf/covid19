@@ -519,7 +519,7 @@ mod_map_server <- function(input, output, session){
         verticalAlign = "top",
         x = -10,
         y = 40
-      ) #%>% 
+      )
       # my_hc_export(
       #   title = paste(region_lab(), "daily", input$indicator),
       #   source = input$source
@@ -567,7 +567,7 @@ mod_map_server <- function(input, output, session){
   
   output$n_days_ui <- renderUI({
     if (!input$set_days) return(NULL)
-    numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 0, step = 10)
+    numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 1, step = 10)
   })
   
   output$cumulative <- renderHighchart({

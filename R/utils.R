@@ -17,13 +17,13 @@ my_hc_export <- function(hc, title = "", subtitle = "", source = "", width = 800
     buttons = list(contextButton = list(menuItems = dl_buttons, text = dl_text)),
     filename = paste0(filename, Sys.Date()), 
     #url = "https://export.highcharts.com/", fallbackToExportServer = TRUE,
-    #tableCaption = "", useMultiLevelHeaders = FALSE, csv = list(dateFormat = "%d/%m/%Y"),
+    tableCaption = "", useMultiLevelHeaders = FALSE, csv = list(dateFormat = "%d/%m/%Y"),
     chartOptions = list(
       title = list(text = title, style = list(fontFamily = "Arial")),
       subtitle = list(text = " ", style = list(fontFamily = "Arial")),
       credits = list(enabled = TRUE, text = credits),
       legend = list(title = list(text = legend_title)),
-      #colors = pal,
+      colors = epi_pal2,
       # plotOptions = list(series = list(dataLabels = list(enabled = TRUE, format="{point.y:,.0f}"))),
       chart = list(
         style = list(fontFamily = "Arial"),
