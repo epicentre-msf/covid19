@@ -26,6 +26,8 @@ body  {
 .checkbox{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .selectize-dropdown {

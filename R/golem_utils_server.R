@@ -100,14 +100,14 @@ break_text_html <- function(text, width = 25, exdent = 4) {
     stringr::str_replace_all("\\\n", "<br>")
 }
 
-filter_geo <- function(df, r_filter, r_type, to_country = FALSE) {
-  #browser()
+filter_geo <- function(df, r_filter, r_type, iso_col = iso_a3) {
+
   if (r_type == "continent") {
     df <- df %>% dplyr::filter(continent == r_filter)
   } else if (r_type == "region") {
     df <- df %>% dplyr::filter(region == r_filter)
-  } else if (r_type == "country" & to_country) {
-    df <- df %>% dplyr::filter(iso_a3 == r_filter)
+  } else if (r_type == "country") {
+    df <- df %>% dplyr::filter({{iso_col}} == r_filter)
   }
   return(df)
 }

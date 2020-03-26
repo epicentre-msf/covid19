@@ -33,12 +33,6 @@ mod_map_ui <- function(id){
         )
       ),
       col_2(
-        # selectInput(
-        #   ns("source"), 
-        #   "Data source", 
-        #   choices = c("ECDC", "WHO"),
-        #   width = "100%"
-        # )
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"), 
           label = "Data source", 
@@ -48,15 +42,9 @@ mod_map_ui <- function(id){
         )
       ),
       col_2(
-        # selectInput(
-        #   ns("indicator"), 
-        #   "Indicator", 
-        #   choices = c("Cases" = "cases", "Deaths" = "deaths"),
-        #   width = "100%"
-        # )
         shinyWidgets::radioGroupButtons(
-          ns("indicator"), 
-          "Indicator", 
+          inputId = ns("indicator"), 
+          label = "Indicator", 
           choices = c("Cases" = "cases", "Deaths" = "deaths"),
           justified = TRUE,
           size = "sm"
@@ -84,15 +72,17 @@ mod_map_ui <- function(id){
     ),
     
     fluidRow(
-      col_12(
+      shinydashboard::box(
+        width = 8, solidHeader = TRUE,
         leaflet::leafletOutput(ns("map"))
-      )#,
-      # col_4(
-      #   reactable::reactableOutput(ns("table"))
-      # )
+      ),
+      
+      shinydashboard::box(
+        #title = tags$b("Government interventions"), 
+        width = 4, solidHeader = TRUE,
+        reactable::reactableOutput(ns("table"))
+      )
     ),
-    
-    tags$br(),
     
     fluidRow(
       col_6(
@@ -108,7 +98,8 @@ mod_map_ui <- function(id){
           title = tagList(#tags$span(
             tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"), 
             tags$div(style = "display: inline-block; padding-right: 10px;"),
-            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "display: inline-block;")
+            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
+            tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
           ),
           width = NULL, solidHeader = TRUE, 
           highcharter::highchartOutput(ns("cumulative"), height = 300)
@@ -130,7 +121,7 @@ mod_map_server <- function(input, output, session){
   ns <- session$ns
   
   w <- waiter::Waiter$new(
-    #id = c(ns("epicurve"), ns("cumulative")),
+    id = c(ns("map"), ns("epicurve"), ns("cumulative")),
     html = waiter::spin_3(), 
     color = waiter::transparent(.5)
   )
@@ -190,36 +181,9 @@ mod_map_server <- function(input, output, session){
     )
   })
   
-  map_interventions <- reactive({
-    
-    df <- df_interventions %>% 
-      dplyr::filter(
-        measure == input$intervention, 
-        date_implemented >= input$time_period[1]
-      )
-    
-    if (input$region != "Worldwide") {
-      if (input$region %in% continents) {
-        df <- df %>% dplyr::filter(continent == input$region)
-      } else {
-        df <- df %>% dplyr::filter(region == input$region)
-      }
-    }
-    
-    countries <- unique(df$iso)
-    
-    sf_df <- sf_world %>% dplyr::filter(iso_a3 %in% countries)
-    
-      # dplyr::group_by(iso, measure) %>% 
-      # dplyr::filter(date_implemented == max(date_implemented)) %>% 
-      # dplyr::ungroup() %>% 
-      # dplyr::left_join(sf_world, by = c("iso" = "iso_a3"), suffix = c("", ".y")) %>% 
-      # sf::st_as_sf()
-    
-    return(sf_df)
-  })
-  
   map_indicators <- reactive({
+    
+    #w$show()
     
     req(length(input$time_period) == 2)
     
@@ -255,7 +219,7 @@ mod_map_server <- function(input, output, session){
     ind <- rlang::sym(input$indicator)
     
     df <- df %>% 
-      filter_geo(r_filter = region_select(), r_type = region_type(), to_country = TRUE) %>% 
+      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
       dplyr::filter(
         date >= input$time_period[1],
         date <= input$time_period[2]
@@ -269,25 +233,49 @@ mod_map_server <- function(input, output, session){
     return(df)
   })
   
+  df_gi <- reactive({
+    
+    df <- df_interventions
+    
+    if (input$intervention != "") {
+      df <- df %>% dplyr::filter(measure == input$intervention)
+    }
+    
+    return(df)
+    
+  })
+  
   # Outputs ========================================================
   
-  # output$table <- reactable::renderReactable({
-  #   #df <- dplyr::select(df_interventions, date_implemented, country, measure)
-  #   reactable::reactable(
-  #     data = dplyr::select(
-  #       df_interventions, 
-  #       `Date implemented`= date_implemented, 
-  #       Country = country, 
-  #       Measure = measure
-  #     ),
-  #     height = 400,
-  #     details = function(index) {
-  #       comment <- df_interventions[index,]$comments
-  #       comment <- ifelse(is.na(comment), "no further details available", comment)
-  #       htmltools::div(style = "padding: 10px", paste("Details:", comment))
-  #     }
-  #   )
-  # })
+  output$table <- reactable::renderReactable({
+    
+    df <- df_gi()
+    
+    #browser()
+    
+    df <- df %>% 
+      filter_geo(region_select(), region_type(), iso_col = iso) %>% 
+      dplyr::select(date_implemented, country, measure, comments)
+    
+    reactable::reactable(
+      data = df,
+      height = 400, searchable = FALSE, defaultSorted = "date_implemented", 
+      compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
+      showSortable = TRUE,
+      columns = list(
+        date_implemented = reactable::colDef(name = "Date implemented", defaultSortOrder = "desc"),
+        country = reactable::colDef(name = "Country"),
+        measure = reactable::colDef(name = "Intervention"),
+        comments = reactable::colDef(show = FALSE)
+      ),
+      details = function(index) {
+        comment <- df[index,]$comments
+        if(!is.na(comment)) {
+          htmltools::div(style = "padding: 10px", comment)
+        }
+      }
+    )
+  })
   
   output$map <- renderLeaflet({
     
@@ -303,6 +291,8 @@ mod_map_server <- function(input, output, session){
                        options = leafletOptions(pane = "place_labels")) %>%
       setView(0, 40, zoom = 2) %>% 
       addScaleBar(position = "bottomleft") %>% 
+      addControl(tags$div(tag.map.title, HTML("click country on<br>map to filter")), 
+                 position = "bottomleft", className="map-title", layerId = "title") %>% 
       addLayersControl(
         baseGroups = c("Labels", "No Labels"),
         overlayGroups = c("Indicators", "Interventions"),
@@ -311,14 +301,27 @@ mod_map_server <- function(input, output, session){
     
   })
   
-  observeEvent(map_interventions(), {
+  observeEvent(df_gi(), {
     
-    if (input$intervention == "" | nrow(map_interventions()) < 1) {
+    if (input$intervention == "" | nrow(df_gi()) < 1) {
       leafletProxy("map", session) %>%
         clearGroup("Interventions") %>% 
         removeControl(layerId = "choro_legend")
     } else {
-      dat <- map_interventions()
+      
+      df <- df_gi()
+      
+      if (input$region != "Worldwide") {
+        if (input$region %in% continents) {
+          df <- df %>% dplyr::filter(continent == input$region)
+        } else {
+          df <- df %>% dplyr::filter(region == input$region)
+        }
+      }
+      
+      countries <- unique(df$iso)
+      
+      sf_df <- sf_world %>% dplyr::filter(iso_a3 %in% countries)
       
       #popup_cols <- c("country", "measure", "date_implemented", "comments")
       
@@ -328,7 +331,7 @@ mod_map_server <- function(input, output, session){
         clearGroup("Interventions") %>%
         removeControl(layerId = "choro_legend") %>% 
         addPolygons(
-          data = dat,
+          data = sf_df,
           stroke = TRUE,
           color = "white",
           weight = 1,
@@ -397,8 +400,7 @@ mod_map_server <- function(input, output, session){
         layerId = "circle_legend",
         group = "Indicators"
       )
-    
-    w$hide() 
+
   })
   
   observeEvent(input$region, {
@@ -541,33 +543,47 @@ mod_map_server <- function(input, output, session){
       dplyr::arrange(date) %>% 
       dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>% 
       dplyr::ungroup()
-      
+    
     ind <- rlang::sym(input$indicator)
     
-    title <- paste(region_lab(), "cumulative", input$indicator)
+    if (input$set_day0) {
+      df <- df %>% 
+        dplyr::group_by(country) %>% 
+        tidyr::drop_na({{ind}}) %>% 
+        dplyr::filter({{ind}} > 0) %>% 
+        dplyr::mutate(date = 0:(dplyr::n()-1)) %>% 
+        dplyr::ungroup()
+    }
+    
+    
+    #title <- paste(region_lab(), "cumulative", input$indicator)
+    xlab <- ifelse(input$set_day0, paste("Days since first", input$indicator), "")
+    
     y_lab <- stringr::str_to_title(input$indicator)
     y_type <- ifelse(input$log, "logarithmic", "linear")
+    y_min <- ifelse(input$log, 1, 0)
     
     p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
       hc_chart(zoomType = "x") %>% 
-      #hc_title(text = title) %>% 
       #hc_subtitle(text = "Click country on map to filter") %>% 
       hc_xAxis(
-        title = list(text = ""), 
-        min = datetime_to_timestamp(as.Date(input$time_period[1])),
-        max = datetime_to_timestamp(as.Date(input$time_period[2]))
+        title = list(text = xlab)
+        #min = datetime_to_timestamp(as.Date(input$time_period[1])),
+        #max = datetime_to_timestamp(as.Date(input$time_period[2]))
       ) %>% 
       hc_yAxis_multiples(
         list(
           title = list(text = y_lab), 
           allowDecimals = FALSE,
-          type = y_type
+          type = y_type,
+          min = y_min
         ),
         list(
           title = list(text = ""), 
           allowDecimals = FALSE,
           type = y_type,
           opposite = TRUE,
+          min = y_min,
           linkedTo = 0
         )
       ) %>%
@@ -586,7 +602,7 @@ mod_map_server <- function(input, output, session){
     
     return(p)
     
-    #w$hide()
+    w$hide()
   })
   
 }

@@ -6,6 +6,7 @@ app_server <- function(input, output,session) {
   #                                        sheet = "Database") %>% 
   #   dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date)
   
+
   # List the first level callModules here
   callModule(mod_map_server, "map_1")
   
