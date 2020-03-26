@@ -144,9 +144,9 @@ mod_map_server <- function(input, output, session){
   ns <- session$ns
   
   w <- waiter::Waiter$new(
-    id = c(ns("map"), ns("epicurve"), ns("cumulative")),
+    id = c(ns("map"), ns("table"), ns("epicurve"), ns("cumulative")),
     html = waiter::spin_3(), 
-    color = waiter::transparent(.5)
+    color = waiter::transparent(alpha = 0)
   )
   
   # Region select observers ====================================================
@@ -206,7 +206,7 @@ mod_map_server <- function(input, output, session){
   
   map_indicators <- reactive({
     
-    #w$show()
+    w$show()
     
     req(length(input$time_period) == 2)
     
@@ -280,7 +280,7 @@ mod_map_server <- function(input, output, session){
       filter_geo(region_select(), region_type(), iso_col = iso) %>% 
       dplyr::select(date_implemented, country, measure, comments)
     
-    reactable::reactable(
+    rtbl <- reactable::reactable(
       data = df,
       height = 400, searchable = FALSE, defaultSorted = "date_implemented", 
       compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
@@ -298,6 +298,8 @@ mod_map_server <- function(input, output, session){
         }
       }
     )
+    return(rtbl)
+    w$hide()
   })
   
   output$map <- renderLeaflet({
@@ -423,7 +425,8 @@ mod_map_server <- function(input, output, session){
         layerId = "circle_legend",
         group = "Indicators"
       )
-
+    
+    w$hide()
   })
   
   observeEvent(input$region, {
@@ -516,6 +519,10 @@ mod_map_server <- function(input, output, session){
         verticalAlign = "top",
         x = -10,
         y = 40
+      ) %>% 
+      my_hc_export(
+        title = paste(region_lab(), "daily", input$indicator),
+        source = input$source
       )
     
     # if (region_type() == "country") {
@@ -555,7 +562,7 @@ mod_map_server <- function(input, output, session){
 
     return(p)
     
-    #w$hide()
+    w$hide()
   })
   
   output$n_days_ui <- renderUI({
@@ -580,7 +587,7 @@ mod_map_server <- function(input, output, session){
         dplyr::group_by(country) %>% 
         tidyr::drop_na({{ind}}) %>% 
         dplyr::filter({{ind}} >= input$n_days) %>% 
-        dplyr::mutate(date = 0:(dplyr::n()-1)) %>% 
+        dplyr::mutate(date = seq_along({{ind}})-1) %>% 
         dplyr::ungroup()
     }
     
@@ -590,6 +597,7 @@ mod_map_server <- function(input, output, session){
     xlab <- ifelse(input$set_days, paste("Days since first", input$n_days, input$indicator), "")
     
     y_lab <- stringr::str_to_title(input$indicator)
+    if (input$log) y_lab <- paste(y_lab, "(log scale)")
     y_type <- ifelse(input$log, "logarithmic", "linear")
     y_min <- ifelse(input$log, 1, 0)
     y_min <- ifelse(input$set_days, input$n_days, y_min)
@@ -623,7 +631,11 @@ mod_map_server <- function(input, output, session){
         layout = "proximate", 
         align = "right"
       ) %>% 
-      hc_plotOptions(series = list(states = list(inactive = list(opacity = 0.2))))
+      my_hc_export(
+        title = paste(region_lab(), "cumulative", input$indicator),
+        source = input$source
+        
+      )
       # hc_plotOptions(
       #   series = list(
       #     states = list(inactive = list(opacity = 0.2))
