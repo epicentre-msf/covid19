@@ -95,11 +95,34 @@ mod_map_ui <- function(id){
       
       col_6(
         shinydashboard::box(
-          title = tagList(#tags$span(
+          title = tagList(
             tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"), 
             tags$div(style = "display: inline-block; padding-right: 10px;"),
-            tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
-            tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
+            tags$div(
+              style = "display: inline-block;",
+              shinyWidgets::dropdownButton(
+                size = "xs", label = "params",  icon = icon("sliders"), #status = "primary",
+                inline = TRUE, width = "50px", circle = FALSE,
+                # checkboxGroupInput(ns("c_params"), label = "", inline = FALSE,
+                #                    choices = c("log scale" = "log", "set days since" = "days")),
+                checkboxInput(ns("log"), label = "log scale", value = FALSE),
+                checkboxInput(ns("set_days"), label = "xaxis to days since...", value = FALSE),
+                tags$br(),
+                uiOutput(ns("n_days_ui"))
+              )
+            )
+            # tags$div(
+            #   style = "display: inline-block;",
+            #   checkboxGroupInput(ns("c_params"), label = "", inline = TRUE,
+            #                      choices = c("log scale" = "log", "set days since" = "days"))
+            # ),
+            # tags$div(
+            #   style = "display: inline-block;",
+            #   numericInput(ns("n_days"), label = "n days", value = 10, min = 0, step = 10)
+            # )
+            #tags$div(style = "display: inline-block; padding-right: 10px;"),
+            #tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
+            #tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
           ),
           width = NULL, solidHeader = TRUE, 
           highcharter::highchartOutput(ns("cumulative"), height = 300)
@@ -535,6 +558,11 @@ mod_map_server <- function(input, output, session){
     #w$hide()
   })
   
+  output$n_days_ui <- renderUI({
+    if (!input$set_days) return(NULL)
+    numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 0, step = 10)
+  })
+  
   output$cumulative <- renderHighchart({
     #w$show()
     
@@ -546,22 +574,25 @@ mod_map_server <- function(input, output, session){
     
     ind <- rlang::sym(input$indicator)
     
-    if (input$set_day0) {
+    if (input$set_days) {
+      req(input$n_days)
       df <- df %>% 
         dplyr::group_by(country) %>% 
         tidyr::drop_na({{ind}}) %>% 
-        dplyr::filter({{ind}} > 0) %>% 
+        dplyr::filter({{ind}} >= input$n_days) %>% 
         dplyr::mutate(date = 0:(dplyr::n()-1)) %>% 
         dplyr::ungroup()
     }
     
+    validate(need(nrow(df) > 0, "No countries meet the criteria..."))
     
     #title <- paste(region_lab(), "cumulative", input$indicator)
-    xlab <- ifelse(input$set_day0, paste("Days since first", input$indicator), "")
+    xlab <- ifelse(input$set_days, paste("Days since first", input$n_days, input$indicator), "")
     
     y_lab <- stringr::str_to_title(input$indicator)
     y_type <- ifelse(input$log, "logarithmic", "linear")
     y_min <- ifelse(input$log, 1, 0)
+    y_min <- ifelse(input$set_days, input$n_days, y_min)
     
     p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
       hc_chart(zoomType = "x") %>% 

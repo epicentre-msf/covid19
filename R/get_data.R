@@ -3,13 +3,15 @@
 #' @export
 get_interventions_data <- function() {
   
-  interventions_url <- paste0("https://data.humdata.org/dataset/e1a91ae0-292d-4434-bc75-bf863d4608ba/", 
-                              "resource/9064f002-1b26-4af3-b990-c843ddc24b75/download/", 
-                              "20200323-acaps-covid-19-goverment-measures-dataset-v1.xlsx")
+  base_url <- "https://data.humdata.org"
+  dl_url <- xml2::read_html(paste0(base_url, "/dataset/acaps-covid19-government-measures-dataset#")) %>% 
+    rvest::html_node(css = ".ga-download") %>% 
+    rvest::html_attr("href") %>% 
+    xml2::url_absolute(base_url)
   
   temp <- tempdir()
   filename <- "interventions.xlsx"
-  curl::curl_download(interventions_url, destfile = fs::path(temp, filename))
+  curl::curl_download(dl_url, destfile = fs::path(temp, filename))
 
   readxl::read_excel(fs::path(temp, filename), sheet = "Database") %>% 
     janitor::clean_names() %>% 

@@ -57,9 +57,18 @@ golem_add_external_resources <- function(){
   )
  
   tags$head(
+    metathis::meta() %>%
+      metathis::meta_social(
+        title = "COVID-19 Epi Dashboard",
+        description = "Developed by Epicentre - MSF",
+        url = "https://reports.msf.net/public/covid19/",
+        image = "https://reports.msf.net/img/covid19.png",
+        image_alt = "covid-19 dashboard screenshot",
+        twitter_card_type = "summary_large_image"
+      ),
+    shiny::includeHTML(system.file('app/www/ga.html', package = 'covid19')),
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
-    shiny::includeHTML(system.file('app/www/add_meta.html', package = 'covid19')),
     waiter::use_waiter(include_js = FALSE),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
     tags$script(src="www/addNavLink.js"),

@@ -14,3 +14,4 @@ data_dir <- here::here("data-raw")
 covid19::run_app("data_dir" = data_dir, lb = TRUE)
 
 
+
