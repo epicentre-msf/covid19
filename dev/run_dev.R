@@ -8,8 +8,6 @@ golem::detach_all_attached()
 # Document and reload your package
 golem::document_and_reload()
 
-data_dir <- here::here("data-raw")
-
 # Run the application
-covid19::run_app("data_dir" = data_dir, lb = TRUE)
+covid19::run_app(lb = TRUE)
 

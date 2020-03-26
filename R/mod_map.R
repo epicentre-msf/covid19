@@ -519,11 +519,11 @@ mod_map_server <- function(input, output, session){
         verticalAlign = "top",
         x = -10,
         y = 40
-      ) %>% 
-      my_hc_export(
-        title = paste(region_lab(), "daily", input$indicator),
-        source = input$source
-      )
+      ) #%>% 
+      # my_hc_export(
+      #   title = paste(region_lab(), "daily", input$indicator),
+      #   source = input$source
+      # )
     
     # if (region_type() == "country") {
     #   
@@ -630,12 +630,12 @@ mod_map_server <- function(input, output, session){
         #title = list(text = "Top 9 + other"), 
         layout = "proximate", 
         align = "right"
-      ) %>% 
-      my_hc_export(
-        title = paste(region_lab(), "cumulative", input$indicator),
-        source = input$source
-        
-      )
+      ) #%>% 
+      # my_hc_export(
+      #   title = paste(region_lab(), "cumulative", input$indicator),
+      #   source = input$source
+      #   
+      # )
       # hc_plotOptions(
       #   series = list(
       #     states = list(inactive = list(opacity = 0.2))
