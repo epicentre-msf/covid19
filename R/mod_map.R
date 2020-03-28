@@ -243,10 +243,7 @@ mod_map_server <- function(input, output, session){
     
     df <- df %>% 
       filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
-      dplyr::filter(
-        date >= input$time_period[1],
-        date <= input$time_period[2]
-      ) %>% 
+      dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>% 
       tidyr::drop_na(country, {{ind}}) %>% 
       dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ind}})) %>% 
       dplyr::group_by(date, country) %>% 
@@ -259,11 +256,7 @@ mod_map_server <- function(input, output, session){
   df_gi <- reactive({
     
     df <- df_interventions
-    
-    if (input$intervention != "") {
-      df <- df %>% dplyr::filter(measure == input$intervention)
-    }
-    
+    if (input$intervention != "") df <- df %>% dplyr::filter(measure == input$intervention)
     return(df)
     
   })
@@ -274,8 +267,6 @@ mod_map_server <- function(input, output, session){
     
     df <- df_gi()
     
-    #browser()
-    
     df <- df %>% 
       filter_geo(region_select(), region_type(), iso_col = iso) %>% 
       dplyr::select(date_implemented, country, measure, comments)
@@ -284,7 +275,7 @@ mod_map_server <- function(input, output, session){
       data = df,
       height = 400, searchable = FALSE, defaultSorted = "date_implemented", 
       compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
-      showSortable = TRUE,
+      showSortable = TRUE, filterable = TRUE, 
       columns = list(
         date_implemented = reactable::colDef(name = "Date implemented", defaultSortOrder = "desc"),
         country = reactable::colDef(name = "Country"),
@@ -350,8 +341,6 @@ mod_map_server <- function(input, output, session){
       
       #popup_cols <- c("country", "measure", "date_implemented", "comments")
       
-      #browser()
-      
       leafletProxy("map", session) %>%
         clearGroup("Interventions") %>%
         removeControl(layerId = "choro_legend") %>% 
@@ -362,7 +351,7 @@ mod_map_server <- function(input, output, session){
           weight = 1,
           fillColor = "red",
           fillOpacity = .4,
-          #label = ~country,
+          label = ~country,
           #popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
           highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
           group = "Interventions",
@@ -377,7 +366,7 @@ mod_map_server <- function(input, output, session){
           group = "Interventions"
         )
     }
-    
+    w$hide()
   })
   
   observe({
@@ -460,6 +449,7 @@ mod_map_server <- function(input, output, session){
         flyToBounds(bbox[["xmin"]], bbox[["ymin"]], bbox[["xmax"]], bbox[["ymax"]])
     }
     
+    w$hide()
   })
   
   region_lab <- reactive({
@@ -483,7 +473,7 @@ mod_map_server <- function(input, output, session){
     
     #browser()
 
-    title <- paste(region_lab(), "daily", input$indicator)
+    #title <- paste(region_lab(), "daily", input$indicator)
     y_lab <- stringr::str_to_title(input$indicator)
     
     p <- hchart(df, type = "column", hcaes(date, !!ind, group = country)) %>% # name = input$indicator
@@ -511,8 +501,9 @@ mod_map_server <- function(input, output, session){
         )
       ) %>%
       hc_plotOptions(
-        series = list(stacking = "normal"),
-        column = list(groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
+        #series = list(stacking = "normal"),
+        line = list(zIndex = 1, dashStyle = "ShortDash"),
+        column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
       ) %>% 
       hc_legend(
         #title = list(text = "Top 9 + other"),
@@ -527,40 +518,87 @@ mod_map_server <- function(input, output, session){
       #   source = input$source
       # )
     
-    # if (region_type() == "country") {
-    #   
-    #   lockdown_start <- df_interventions %>%
-    #     dplyr::filter(iso == region_select(), is.na(admin_level_name), measure == "General lockdown") %>%
-    #     dplyr::summarise(start = datetime_to_timestamp(min(date_implemented))) %>% 
-    #     dplyr::pull(start)
-    #   
-    #   lockdown_end <- datetime_to_timestamp(Sys.Date())
-    #   
-    #   p <- p %>%
-    #     hc_xAxis(
-    #       title = list(text = ""), 
-    #       min = datetime_to_timestamp(as.Date(input$time_period[1])),
-    #       max = datetime_to_timestamp(as.Date(input$time_period[2])),
-    #       plotBands = list(
-    #         # yellow band
-    #         list(
-    #           color = "#FCFFC550",
-    #           zIndex = 3,
-    #           from = lockdown_start,
-    #           to = lockdown_end
-    #         )
-    #       )
-    #     ) %>% 
-    #     hc_annotations(
-    #       list(
-    #         draggable = "",
-    #         labels = list(
-    #           list(point = list(x = lockdown_start, y = max(df[[input$indicator]], na.rm = TRUE),  xAxis = 0, yAxis = 0), 
-    #                text = "National lockdown", style = list(color = "black"), align = "left", backgroundColor = "transparent", borderWidth = 0)
-    #         )
-    #       )
-    #     )
-    # }
+    if (region_type() == "country") {
+      
+      max_n <- max(df[[input$indicator]], na.rm = TRUE)
+
+      #browser()
+      lockdowns <- df_interventions %>%
+        dplyr::filter(
+          iso == region_select(), 
+          measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
+        ) %>% 
+        dplyr::transmute(
+          x = datetime_to_timestamp(date_implemented), min = 0, max = max_n, 
+          measure = measure, comments = comments
+        ) %>% 
+        tidyr::pivot_longer(cols = c(min, max), names_to = "key", values_to = "y") %>% 
+        dplyr::arrange(x, measure, comments, y) %>% 
+        dplyr::distinct()
+      
+      if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
+        lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
+      }
+      
+      lockdowns <- lockdowns %>% dplyr::group_split(x, measure, comments)
+      
+      purrr::walk(lockdowns, ~{
+        p <<- p %>%
+          hc_add_series(
+            data = .x,
+            type = "line",
+            color = "grey",
+            enableMouseTracking = FALSE,
+            showInLegend = FALSE
+          )
+      })
+      
+      p <- p %>% 
+        hc_annotations(
+          list(
+            draggable = "xy",  
+            labels = purrr::map(rev(lockdowns), ~{
+                df <- .x
+                list(point = list(x = unique(df$x), y = max(df$y),  xAxis = 0, yAxis = 0),
+                     text = break_text_html(unique(df$measure), width = 10), align = "center")
+              }),
+            labelOptions = list(allowOverlap = FALSE, x = -50, y = 0)
+          )
+        )
+
+      # p <- p %>%
+      #   hc_add_series(
+      #     type = "line", 
+      #     color = "grey",
+      #     data = lockdowns,
+      #     hcaes(x, y, group = measure),
+      #     enableMouseTracking = FALSE,
+      #     showInLegend = FALSE
+      #   ) %>% 
+      #   hc_xAxis(
+      #     title = list(text = ""),
+      #     min = datetime_to_timestamp(as.Date(input$time_period[1])),
+      #     max = datetime_to_timestamp(as.Date(input$time_period[2])),
+      #     plotBands = list(
+      #       # yellow band
+      #       list(
+      #         color = "#FCFFC550",
+      #         zIndex = 3,
+      #         from = lockdown_start,
+      #         to = lockdown_end
+      #       )
+      #     )
+      #   ) %>%
+      #   hc_annotations(
+      #     list(
+      #       draggable = "",
+      #       labels = list(
+      #         list(point = list(x = lockdown_start, y = max(df[[input$indicator]], na.rm = TRUE),  xAxis = 0, yAxis = 0),
+      #              text = "National lockdown", style = list(color = "black"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+      #       )
+      #     )
+      #   )
+    }
 
     return(p)
     
