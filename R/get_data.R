@@ -31,24 +31,45 @@ get_interventions_data <- function() {
 #' @export
 get_ecdc_data <- function() {
   
-  df_ecdc <- NCoVUtils::get_ecdc_cases() %>% 
-    dplyr::mutate(geoid = dplyr::case_when(
-      country == "United_Kingdom" ~ "GB",
-      country == "Greece" ~ "GR",
-      country == "French_Polynesia" ~ "PF",
-      TRUE ~ geoid
-    )) %>% 
-    dplyr::rename(country_ecdc = country) %>% 
+  base_url <- "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
+  
+  d <- readr::read_csv(base_url) %>%
+    dplyr::mutate(date = as.Date(dateRep, format = "%d/%m/%Y")) %>%
+    dplyr::rename(geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2018 = popData2018) %>%
+    dplyr::select(-dateRep) %>%
+    dplyr::arrange(date) %>%
+    dplyr::mutate(cases = ifelse(cases < 0, 0, cases)) %>% 
     dplyr::mutate(
-      country = countrycode::countrycode(geoid, origin = "iso2c", destination = "country.name"),
-      # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
-      country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
-      continent = countrycode::countrycode(geoid, origin = "iso2c", destination = "continent"),
-      region = countrycode::countrycode(geoid, origin = "iso2c", destination = "region"),
-      iso_a3 = countrycode::countrycode(geoid, origin = "iso2c", destination = "iso3c"),
+      country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
+      # make congo names more PC
+      country = dplyr::case_when(
+        country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", 
+        country == "Congo - Brazzaville" ~ "Republic of Congo",
+        TRUE ~ country),
+      continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
       source = "ECDC"
     ) %>% 
-    dplyr::select(date, country_ecdc:geoid, country:iso_a3, cases, deaths, source)
+    dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2018, source)
+  
+  # df_ecdc <- NCoVUtils::get_ecdc_cases() %>% 
+  #   dplyr::mutate(geoid = dplyr::case_when(
+  #     country == "United_Kingdom" ~ "GB",
+  #     country == "Greece" ~ "GR",
+  #     country == "French_Polynesia" ~ "PF",
+  #     TRUE ~ geoid
+  #   )) %>% 
+  #   dplyr::rename(country_ecdc = country) %>% 
+  #   dplyr::mutate(
+  #     country = countrycode::countrycode(geoid, origin = "iso2c", destination = "country.name"),
+  #     # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
+  #     country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
+  #     continent = countrycode::countrycode(geoid, origin = "iso2c", destination = "continent"),
+  #     region = countrycode::countrycode(geoid, origin = "iso2c", destination = "region"),
+  #     iso_a3 = countrycode::countrycode(geoid, origin = "iso2c", destination = "iso3c"),
+  #     source = "ECDC"
+  #   ) %>% 
+  #   dplyr::select(date, country_ecdc:geoid, country:iso_a3, cases, deaths, source)
 
 }
 
