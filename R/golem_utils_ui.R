@@ -180,9 +180,9 @@ col_10 <- function(...){
   column(10, ...)
 }
 
-#' @importFrom shiny column
+#' @importFrom shiny div
 col_8 <- function(...){
-  column(8, ...)
+  div(class = "col-xs-12 col-sm-12 col-md-8", ...)
 }
 
 #' @importFrom shiny div
@@ -190,9 +190,9 @@ col_6 <- function(...){
   div(class = "col-xs-12 col-sm-12 col-md-6", ...)
 }
 
-#' @importFrom shiny column
+#' @importFrom shiny div
 col_4 <- function(...){
-  column(4, ...)
+  div(class = "col-xs-12 col-sm-12 col-md-4", ...)
 }
 
 #' @importFrom shiny column

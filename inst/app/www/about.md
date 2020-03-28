@@ -4,11 +4,11 @@
 
 The goal of this dashboard is to provide an epidemiological overview of the COVID-19 pandemic, incorporating data from multiple sources. 
 
-It is being actively developed by the data science team at [Epicentre MSF](https://epicentre.msf.org/en).
-
-Future plans include more detailed analysis at sub-national levels and incorporation of data collected at MSF hospitals.
+It is being actively developed by the data science team at [Epicentre MSF](https://epicentre.msf.org/en). For any inquiries, contact [Paul Campbell](https://twitter.com/paulcampbell91).
 
 The tool is built using the R programming language and the shiny web framework. Packages used include the tidyverse, leaflet and highcharter.
+
+If you are part of the MSF network, you can access further Epicentre COVID-19 content on our [Sharepoint site](https://msfintl.sharepoint.com/sites/grp-epi-proj-ncov).
 
 ### Current data sources
 

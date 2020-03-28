@@ -87,7 +87,10 @@ mod_map_ui <- function(id){
     fluidRow(
       col_6(
         shinydashboard::box(
-          title = tags$b(shiny::textOutput(ns("epicurve_title"))),
+          title = tagList(
+            tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;"),
+            tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
+          ),
           width = NULL, solidHeader = TRUE,
           highcharter::highchartOutput(ns("epicurve"), height = 300)
         )
@@ -228,6 +231,7 @@ mod_map_server <- function(input, output, session){
       tidyr::drop_na(iso_a3) %>% 
       dplyr::group_by(country, iso_a3) %>% 
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
+      dplyr::arrange(-cases) %>% 
       dplyr::inner_join(dplyr::select(sf_world, iso_a3, lon, lat), by = c("iso_a3")) %>% 
       sf::st_as_sf()
     
@@ -277,7 +281,9 @@ mod_map_server <- function(input, output, session){
       compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
       showSortable = TRUE, filterable = TRUE, 
       columns = list(
-        date_implemented = reactable::colDef(name = "Date implemented", defaultSortOrder = "desc"),
+        date_implemented = reactable::colDef(name = "Date implemented", 
+                                             defaultSortOrder = "desc",
+                                             filterable = FALSE),
         country = reactable::colDef(name = "Country"),
         measure = reactable::colDef(name = "Intervention"),
         comments = reactable::colDef(show = FALSE)
@@ -464,6 +470,27 @@ mod_map_server <- function(input, output, session){
     paste(region_lab(), "cumulative", input$indicator)
   })
   
+  lockdown_lines <- reactive({
+    lockdowns <- df_interventions %>%
+      dplyr::filter(
+        iso == region_select(),
+        measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
+      ) %>% 
+      dplyr::mutate(x = datetime_to_timestamp(date_implemented)) %>% 
+      dplyr::select(x, measure) %>% 
+      dplyr::distinct() %>% 
+      dplyr::group_by(x) %>% 
+      dplyr::arrange(x) %>% 
+      dplyr::filter(dplyr::row_number() == 1) %>% 
+      dplyr::ungroup()
+    
+    # if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
+    #   lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
+    # }
+    
+    lockdowns %>% dplyr::group_split(x, measure)
+  })
+  
   output$epicurve <- renderHighchart({
     #w$show()
     
@@ -479,9 +506,9 @@ mod_map_server <- function(input, output, session){
     p <- hchart(df, type = "column", hcaes(date, !!ind, group = country)) %>% # name = input$indicator
       hc_chart(zoomType = "x") %>% 
       #hc_title(text = title) %>% 
-      #hc_subtitle(text = "Click country on map to filter") %>% 
+      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
       hc_xAxis(
-        title = list(text = ""), 
+        title = list(text = ""),
         min = datetime_to_timestamp(as.Date(input$time_period[1])),
         max = datetime_to_timestamp(as.Date(input$time_period[2]))
       ) %>% 
@@ -490,18 +517,15 @@ mod_map_server <- function(input, output, session){
           title = list(text = y_lab), 
           #stackLabels = list(enabled = TRUE, align = "center"),
           allowDecimals = FALSE
-          #max = n_max + (n_max*.1)
         ),
         list(
           title = list(text = ""), 
           allowDecimals = FALSE,
           opposite = TRUE,
-          #max = n_max + (n_max*.1),
           linkedTo = 0
         )
       ) %>%
       hc_plotOptions(
-        #series = list(stacking = "normal"),
         line = list(zIndex = 1, dashStyle = "ShortDash"),
         column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
       ) %>% 
@@ -513,89 +537,60 @@ mod_map_server <- function(input, output, session){
         x = -10,
         y = 40
       )
-      # my_hc_export(
-      #   title = paste(region_lab(), "daily", input$indicator),
-      #   source = input$source
-      # )
     
     if (region_type() == "country") {
       
-      max_n <- max(df[[input$indicator]], na.rm = TRUE)
-
-      #browser()
-      lockdowns <- df_interventions %>%
-        dplyr::filter(
-          iso == region_select(), 
-          measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
-        ) %>% 
-        dplyr::transmute(
-          x = datetime_to_timestamp(date_implemented), min = 0, max = max_n, 
-          measure = measure, comments = comments
-        ) %>% 
-        tidyr::pivot_longer(cols = c(min, max), names_to = "key", values_to = "y") %>% 
-        dplyr::arrange(x, measure, comments, y) %>% 
-        dplyr::distinct()
-      
-      if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
-        lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
-      }
-      
-      lockdowns <- lockdowns %>% dplyr::group_split(x, measure, comments)
-      
-      purrr::walk(lockdowns, ~{
-        p <<- p %>%
-          hc_add_series(
-            data = .x,
-            type = "line",
-            color = "grey",
-            enableMouseTracking = FALSE,
-            showInLegend = FALSE
-          )
-      })
-      
       p <- p %>% 
-        hc_annotations(
-          list(
-            draggable = "xy",  
-            labels = purrr::map(rev(lockdowns), ~{
-                df <- .x
-                list(point = list(x = unique(df$x), y = max(df$y),  xAxis = 0, yAxis = 0),
-                     text = break_text_html(unique(df$measure), width = 10), align = "center")
-              }),
-            labelOptions = list(allowOverlap = FALSE, x = -50, y = 0)
-          )
+        hc_xAxis(
+          plotLines = purrr::map(rev(lockdown_lines()), ~{
+            df <- .x
+            list(color = "red", zIndex = 1, value = unique(df$x), 
+                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
+          })
         )
+      
+      #max_n <- max(df[[input$indicator]], na.rm = TRUE)
 
-      # p <- p %>%
-      #   hc_add_series(
-      #     type = "line", 
-      #     color = "grey",
-      #     data = lockdowns,
-      #     hcaes(x, y, group = measure),
-      #     enableMouseTracking = FALSE,
-      #     showInLegend = FALSE
+      # lockdowns <- df_interventions %>%
+      #   dplyr::filter(
+      #     iso == region_select(), 
+      #     measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
       #   ) %>% 
-      #   hc_xAxis(
-      #     title = list(text = ""),
-      #     min = datetime_to_timestamp(as.Date(input$time_period[1])),
-      #     max = datetime_to_timestamp(as.Date(input$time_period[2])),
-      #     plotBands = list(
-      #       # yellow band
-      #       list(
-      #         color = "#FCFFC550",
-      #         zIndex = 3,
-      #         from = lockdown_start,
-      #         to = lockdown_end
-      #       )
+      #   dplyr::transmute(
+      #     x = datetime_to_timestamp(date_implemented), min = 0, max = max_n, 
+      #     measure = measure, comments = comments
+      #   ) %>% 
+      #   tidyr::pivot_longer(cols = c(min, max), names_to = "key", values_to = "y") %>% 
+      #   dplyr::arrange(x, measure, comments, y) %>% 
+      #   dplyr::distinct()
+      # 
+      # if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
+      #   lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
+      # }
+      # 
+      # lockdowns <- lockdowns %>% dplyr::group_split(x, measure, comments)
+      
+      # purrr::walk(lockdowns, ~{
+      #   p <<- p %>%
+      #     hc_add_series(
+      #       data = .x,
+      #       type = "line",
+      #       color = "grey",
+      #       enableMouseTracking = FALSE,
+      #       showInLegend = FALSE
       #     )
-      #   ) %>%
+      # })
+      # 
+      # p <- p %>% 
       #   hc_annotations(
       #     list(
-      #       draggable = "",
-      #       labels = list(
-      #         list(point = list(x = lockdown_start, y = max(df[[input$indicator]], na.rm = TRUE),  xAxis = 0, yAxis = 0),
-      #              text = "National lockdown", style = list(color = "black"), align = "left", backgroundColor = "transparent", borderWidth = 0)
-      #       )
+      #       draggable = "xy",  
+      #       labels = purrr::map(rev(lockdowns), ~{
+      #           df <- .x
+      #           list(point = list(x = unique(df$x), y = max(df$y),  xAxis = 0, yAxis = 0),
+      #                text = break_text_html(unique(df$measure), width = 10), align = "center")
+      #         }),
+      #       labelOptions = list(allowOverlap = FALSE, x = -50, y = 0)
       #     )
       #   )
     }
@@ -644,7 +639,7 @@ mod_map_server <- function(input, output, session){
     
     p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
       hc_chart(zoomType = "x") %>% 
-      #hc_subtitle(text = "Click country on map to filter") %>% 
+      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
       hc_xAxis(
         title = list(text = xlab)
         #min = datetime_to_timestamp(as.Date(input$time_period[1])),
@@ -670,18 +665,18 @@ mod_map_server <- function(input, output, session){
         #title = list(text = "Top 9 + other"), 
         layout = "proximate", 
         align = "right"
-      ) #%>% 
-      # my_hc_export(
-      #   title = paste(region_lab(), "cumulative", input$indicator),
-      #   source = input$source
-      #   
-      # )
-      # hc_plotOptions(
-      #   series = list(
-      #     states = list(inactive = list(opacity = 0.2))
-      #     #label = list(enabled = TRUE)
-      #   )
-      # )
+      ) 
+    
+    if (region_type() == "country") {
+      p <- p %>% 
+        hc_xAxis(
+          plotLines = purrr::map(rev(lockdown_lines()), ~{
+            df <- .x
+            list(color = "red", zIndex = 1, value = unique(df$x), 
+                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
+          })
+        )
+    }
     
     return(p)
     
