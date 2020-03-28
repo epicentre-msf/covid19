@@ -247,7 +247,7 @@ mod_map_server <- function(input, output, session){
         date >= input$time_period[1],
         date <= input$time_period[2]
       ) %>% 
-      tidyr::drop_na(iso_a3, {{ind}}) %>% 
+      tidyr::drop_na(country, {{ind}}) %>% 
       dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ind}})) %>% 
       dplyr::group_by(date, country) %>% 
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
@@ -480,6 +480,8 @@ mod_map_server <- function(input, output, session){
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
     #n_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+    
+    #browser()
 
     title <- paste(region_lab(), "daily", input$indicator)
     y_lab <- stringr::str_to_title(input$indicator)
