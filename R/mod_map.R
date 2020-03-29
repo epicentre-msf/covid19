@@ -80,7 +80,7 @@ mod_map_ui <- function(id){
       shinydashboard::box(
         #title = tags$b("Government interventions"), 
         width = 4, solidHeader = TRUE,
-        reactable::reactableOutput(ns("table"))
+        reactable::reactableOutput(ns("table"), height = 400)
       )
     ),
     
