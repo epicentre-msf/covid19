@@ -282,7 +282,7 @@ mod_map_server <- function(input, output, session){
   
   output$table <- reactable::renderReactable({
     
-    w_tbl$show()
+    #w_tbl$show()
     
     df <- df_gi()
     
