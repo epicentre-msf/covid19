@@ -33,7 +33,9 @@ Imports:
     shinydashboard,
     shinyWidgets,
     reactable,
-    metathis
+    metathis,
+    shinyjs,
+    leaflet.extras
 RoxygenNote: 6.1.1
 URL: https://github.com/epicentre-msf/covid19
 BugReports: https://github.com/epicentre-msf/covid19/issues

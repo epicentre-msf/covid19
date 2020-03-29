@@ -25,8 +25,8 @@ app_ui <- function() {
         value = "about",
         title = icon("question-circle"), 
         fluidRow(
-          col_8(
-            offset = 2,
+          column(
+            width = 8, offset = 2,
             includeMarkdown(system.file('app/www/about.md', package = 'covid19'))
           )
         )
@@ -70,6 +70,7 @@ golem_add_external_resources <- function(){
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
     waiter::use_waiter(include_js = FALSE),
+    shinyjs::useShinyjs(),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
     tags$script(src="www/addNavLink.js"),
     shinyWidgets::useShinydashboard()

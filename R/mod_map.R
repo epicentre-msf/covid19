@@ -27,7 +27,7 @@ mod_map_ui <- function(id){
       col_2(
         selectInput(
           ns("region"), 
-          "Region Focus", 
+          "Region focus", 
           choices = region_selects, 
           width = "100%"
         )
@@ -87,17 +87,18 @@ mod_map_ui <- function(id){
     fluidRow(
       col_6(
         shinydashboard::box(
-          title = tagList(
-            tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;"),
-            tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
-          ),
           width = NULL, solidHeader = TRUE,
+          title = tagList(
+            tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;")#,
+            #tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
+          ),
           highcharter::highchartOutput(ns("epicurve"), height = 300)
         )
       ),
       
       col_6(
         shinydashboard::box(
+          width = NULL, solidHeader = TRUE, 
           title = tagList(
             tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"), 
             tags$div(style = "display: inline-block; padding-right: 10px;"),
@@ -111,7 +112,8 @@ mod_map_ui <- function(id){
                 checkboxInput(ns("log"), label = "log scale", value = FALSE),
                 checkboxInput(ns("set_days"), label = "xaxis to days since...", value = FALSE),
                 tags$br(),
-                uiOutput(ns("n_days_ui"))
+                numericInput(ns("n_days"), label = paste("n", "cases"), value = 10, min = 1, step = 10)
+                #uiOutput(ns("n_days_ui"))
               )
             )
             # tags$div(
@@ -127,7 +129,6 @@ mod_map_ui <- function(id){
             #tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
             #tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
           ),
-          width = NULL, solidHeader = TRUE, 
           highcharter::highchartOutput(ns("cumulative"), height = 300)
         )
       )
@@ -146,8 +147,20 @@ mod_map_ui <- function(id){
 mod_map_server <- function(input, output, session){
   ns <- session$ns
   
-  w <- waiter::Waiter$new(
-    id = c(ns("map"), ns("table"), ns("epicurve"), ns("cumulative")),
+  w_map <- waiter::Waiter$new(
+    id = c(ns("map")),
+    html = waiter::spin_3(), 
+    color = waiter::transparent(alpha = 0)
+  )
+  
+  w_tbl <- waiter::Waiter$new(
+    id = c(ns("table")),
+    html = waiter::spin_3(), 
+    color = waiter::transparent(alpha = 0)
+  )
+  
+  w_charts <- waiter::Waiter$new(
+    id = c( ns("epicurve"), ns("cumulative")),
     html = waiter::spin_3(), 
     color = waiter::transparent(alpha = 0)
   )
@@ -209,7 +222,7 @@ mod_map_server <- function(input, output, session){
   
   map_indicators <- reactive({
     
-    w$show()
+    w_map$show()
     
     req(length(input$time_period) == 2)
     
@@ -240,7 +253,7 @@ mod_map_server <- function(input, output, session){
   
   df_epicurve <- reactive({
     
-    #w$show()
+    w_charts$show()
     
     df <- df_data()
     ind <- rlang::sym(input$indicator)
@@ -269,6 +282,8 @@ mod_map_server <- function(input, output, session){
   
   output$table <- reactable::renderReactable({
     
+    w_tbl$show()
+    
     df <- df_gi()
     
     df <- df %>% 
@@ -296,7 +311,7 @@ mod_map_server <- function(input, output, session){
       }
     )
     return(rtbl)
-    w$hide()
+    w_tbl$hide()
   })
   
   output$map <- renderLeaflet({
@@ -312,9 +327,11 @@ mod_map_server <- function(input, output, session){
       addProviderTiles("CartoDB.PositronOnlyLabels", group = "Labels", 
                        options = leafletOptions(pane = "place_labels")) %>%
       setView(0, 40, zoom = 2) %>% 
-      addScaleBar(position = "bottomleft") %>% 
+      #addScaleBar(position = "bottomleft") %>% 
       addControl(tags$div(tag.map.title, HTML("click country on<br>map to filter")), 
                  position = "bottomleft", className="map-title", layerId = "title") %>% 
+      leaflet.extras::addFullscreenControl(position = "topleft") %>% 
+      leaflet.extras::addResetMapButton() %>% 
       addLayersControl(
         baseGroups = c("Labels", "No Labels"),
         overlayGroups = c("Indicators", "Interventions"),
@@ -372,7 +389,7 @@ mod_map_server <- function(input, output, session){
           group = "Interventions"
         )
     }
-    w$hide()
+    w_map$hide()
   })
   
   observe({
@@ -421,7 +438,7 @@ mod_map_server <- function(input, output, session){
         group = "Indicators"
       )
     
-    w$hide()
+    w_map$hide()
   })
   
   observeEvent(input$region, {
@@ -455,7 +472,7 @@ mod_map_server <- function(input, output, session){
         flyToBounds(bbox[["xmin"]], bbox[["ymin"]], bbox[["xmax"]], bbox[["ymax"]])
     }
     
-    w$hide()
+    w_map$hide()
   })
   
   region_lab <- reactive({
@@ -496,7 +513,9 @@ mod_map_server <- function(input, output, session){
     
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
-    #n_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+    
+    x_min <- datetime_to_timestamp(as.Date(input$time_period[1]))
+    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
     
     #browser()
 
@@ -528,6 +547,15 @@ mod_map_server <- function(input, output, session){
       hc_plotOptions(
         line = list(zIndex = 1, dashStyle = "ShortDash"),
         column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
+      ) %>% 
+      hc_annotations(
+        list(
+          draggable = "",
+          labels = list(
+            list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
+                 text = "click + drag horizontally<br>to zoom charts", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+          )
+        )
       ) %>% 
       hc_legend(
         #title = list(text = "Top 9 + other"),
@@ -597,12 +625,20 @@ mod_map_server <- function(input, output, session){
 
     return(p)
     
-    w$hide()
+    w_charts$hide()
   })
   
-  output$n_days_ui <- renderUI({
-    if (!input$set_days) return(NULL)
-    numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 1, step = 10)
+  # output$n_days_ui <- renderUI({
+  #   if (!input$set_days) return(NULL)
+  #   numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 1, step = 10)
+  # })
+  
+  observeEvent(input$indicator, {
+    updateNumericInput(session, "n_days", label = paste("n", input$indicator)) 
+  })
+  
+  observeEvent(input$set_days, {
+    shinyjs::toggleElement(id = "n_days", condition = input$set_days, anim = TRUE)
   })
   
   output$cumulative <- renderHighchart({
@@ -616,6 +652,10 @@ mod_map_server <- function(input, output, session){
     
     ind <- rlang::sym(input$indicator)
     
+    x_min <-  datetime_to_timestamp(as.Date(input$time_period[1]))
+    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+    
+    
     if (input$set_days) {
       req(input$n_days)
       df <- df %>% 
@@ -624,6 +664,8 @@ mod_map_server <- function(input, output, session){
         dplyr::filter({{ind}} >= input$n_days) %>% 
         dplyr::mutate(date = seq_along({{ind}})-1) %>% 
         dplyr::ungroup()
+      
+      x_min <- min(df$date, na.rm = TRUE)
     }
     
     validate(need(nrow(df) > 0, "No countries meet the criteria..."))
@@ -661,6 +703,18 @@ mod_map_server <- function(input, output, session){
           linkedTo = 0
         )
       ) %>%
+      hc_plotOptions(
+        line = list(zIndex = 2)
+      ) %>% 
+      # hc_annotations(
+      #   list(
+      #     draggable = "",
+      #     labels = list(
+      #       list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
+      #            text = "click + drag horizontally to zoom", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+      #     )
+      #   )
+      # ) %>% 
       hc_legend(
         #title = list(text = "Top 9 + other"), 
         layout = "proximate", 
@@ -680,7 +734,7 @@ mod_map_server <- function(input, output, session){
     
     return(p)
     
-    w$hide()
+    w_charts$hide()
   })
   
 }
