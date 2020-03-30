@@ -109,7 +109,7 @@ mod_map_ui <- function(id){
                 inline = TRUE, width = "50px", circle = FALSE,
                 # checkboxGroupInput(ns("c_params"), label = "", inline = FALSE,
                 #                    choices = c("log scale" = "log", "set days since" = "days")),
-                checkboxInput(ns("log"), label = "log scale", value = FALSE),
+                checkboxInput(ns("log"), label = "log scale", value = TRUE),
                 checkboxInput(ns("set_days"), label = "xaxis to days since...", value = FALSE),
                 tags$br(),
                 numericInput(ns("n_days"), label = paste("n", "cases"), value = 10, min = 1, step = 10)
