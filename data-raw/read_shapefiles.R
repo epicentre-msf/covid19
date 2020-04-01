@@ -2,6 +2,15 @@
 
 library(sf)
 
+# Syria ------------------------------------------------------------------
+
+# https://data.humdata.org/dataset/syrian-arab-republic-administrative-boundaries-populated-places
+
+syria_adm2 <- st_read(here("data-raw/shapefiles/syria/syr_admin_shp_utf8_19321/syr_admin2.shp"))
+syria_adm3 <- st_read(here("data-raw/shapefiles/syria/syr_admin_shp_utf8_19321/syr_admin3.shp"))
+# point data
+syria_adm4 <- st_read(here("data-raw/shapefiles/syria/syr_admin_shp_utf8_19321/syr_pplp_adm4_unocha.shp"))
+
 
 # France ------------------------------------------------------------------
 
