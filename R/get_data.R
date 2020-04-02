@@ -38,7 +38,7 @@ get_ecdc_data <- function() {
     dplyr::rename(geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2018 = popData2018) %>%
     dplyr::select(-dateRep) %>%
     dplyr::arrange(date) %>%
-    dplyr::mutate(cases = ifelse(cases < 0, 0, cases)) %>% 
+    dplyr::mutate_at(dplyr::vars(cases, deaths), ~ifelse(. < 0, 0L, .)) %>% 
     dplyr::mutate(
       country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
       # make congo names more PC
