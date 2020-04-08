@@ -172,6 +172,44 @@ get_who_data <- function() {
   #   dplyr::select(date, country:region, dplyr::everything())
 }
 
+get_jhcsse_data <- function() {
+  
+  url_cases <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+  url_deaths <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+  
+  df_cases <- clean_jhcsse_data(url_cases, type = "cases")
+  df_deaths <- clean_jhcsse_data(url_deaths, type = "deaths")
+  
+  df_jhcsse <- 
+    dplyr::full_join(df_cases, df_deaths, by = c("iso_a3", "country_jh", "date")) %>% 
+    dplyr::mutate(
+      country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
+      # make congo names more PC
+      country = dplyr::case_when(
+        country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo",
+        country == "Congo - Brazzaville" ~ "Republic of Congo",
+        TRUE ~ country),
+      continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
+      source = "JHCSSE"
+    ) %>% 
+    dplyr::select(date, country_jh, iso_a3, country:region, cases, deaths, source)
 
+}
+
+clean_jhcsse_data <- function(path, type = c("cases", "deaths")) {
+  readr::read_csv(path) %>% 
+    dplyr::filter(is.na(`Province/State`)) %>% # filter to only countries
+    dplyr::select(-`Province/State`, -Lat, -Long) %>% 
+    dplyr::rename(country_jh = `Country/Region`) %>% 
+    tidyr::pivot_longer(-country_jh, names_to = "date", values_to = type) %>% 
+    dplyr::mutate(date = as.Date(date, format = "%m/%d/%y")) %>% 
+    dplyr::group_by(country_jh) %>%
+    dplyr::arrange(date) %>%
+    dplyr::mutate_if(is.numeric, ~c(.[1], diff(.)) %>% as.integer) %>% # convert from cumulative to daily
+    dplyr::mutate_if(is.numeric, ~ifelse(. < 0, 0L, .)) %>% 
+    dplyr::ungroup() %>%
+    dplyr::mutate(iso_a3 = countrycode::countrycode(country_jh, "country.name", "iso3c")) 
+}
 
 

@@ -36,7 +36,7 @@ mod_map_ui <- function(id){
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"), 
           label = "Data source", 
-          choices = c("ECDC", "WHO"),
+          choices = c("ECDC", "WHO", "JHU CSSE"),
           justified = TRUE,
           size = "sm"
         )
@@ -216,7 +216,8 @@ mod_map_server <- function(input, output, session){
     switch(
       input$source, 
       ECDC = df_ecdc,
-      WHO = df_who
+      WHO = df_who,
+      `JHU CSSE` = df_jhcsse
     )
   })
   

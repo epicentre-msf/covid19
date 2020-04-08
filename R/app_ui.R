@@ -22,8 +22,8 @@ app_ui <- function() {
       tabPanel("Global overview", icon = icon("globe-africa"), mod_map_ui("map_1")),
       
       tabPanel(
-        value = "about",
-        title = icon("question-circle"), 
+        title = "About",
+        icon = icon("info-circle"), 
         fluidRow(
           column(
             width = 8, offset = 2,

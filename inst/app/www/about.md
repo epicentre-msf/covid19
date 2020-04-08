@@ -22,6 +22,10 @@ If you are part of the MSF network, you can access further Epicentre COVID-19 co
 
 [WHO situation reports. Data extracted by Eric Brown](https://github.com/eebrown/data2019nCoV)
 
+#### Center for Systems Science and Engineering (CSSE) at Johns Hopkins University (JHU)
+
+[Novel Coronavirus (COVID-19) Cases, provided by JHU CSSE](https://github.com/CSSEGISandData/COVID-19)
+
 #### ACAPS COVID-19: Government Measures Dataset 
 
 [Data available on HDX](https://data.humdata.org/dataset/acaps-covid19-government-measures-dataset)
