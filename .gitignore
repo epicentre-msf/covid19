@@ -3,7 +3,6 @@
 .Rproj.user
 .DS_Store
 .cache
-data-raw/shps
 data-raw/shapefiles
 data
 restart.txt

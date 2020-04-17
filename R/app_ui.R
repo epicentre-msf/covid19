@@ -1,12 +1,5 @@
 #' @import shiny
 app_ui <- function() {
-  # load data files
-  # data_dir <- golem::get_golem_options("data_dir")
-  # df_interventions <- readxl::read_excel(
-  #   fs::path(data_dir, "interventions", "interventions.xlsx"),
-  #   sheet = "Database"
-  # ) %>% 
-  #   dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date)
   
   tagList(
     # Leave this function for adding external resources

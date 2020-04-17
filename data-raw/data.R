@@ -16,7 +16,7 @@ df_who <- get_who_data()
 
 df_jhcsse <- get_jhcsse_data()
 
-data_updated <- Sys.time()
+data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
 usethis::use_data(df_interventions, df_ecdc, df_who, df_jhcsse, data_updated, overwrite = TRUE)
 
