@@ -1,5 +1,5 @@
 
-# covid19
+# COVID-19 Epi Dashboard
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
@@ -14,19 +14,6 @@ It is being actively developed by the data science team at [Epicentre MSF](https
 Future plans include more detailed analysis at sub-national levels and incorporation of data collected at MSF hospitals.
 
 The tool is built using the R programming language and the shiny web framework. Packages used include the tidyverse, leaflet and highcharter.
-
-## To Dos
-
----
-
-- [x] Fix WHO data import and re-incorporate into dashboard
-- [x] Add about page
-- [x] Add epicentre + msf logos
-- [ ] Add reactable for govt interventions
-- [ ] Add interventions to time-series
-- [ ] Add France sub-national analysis tab
-- [ ] Add Iran sub-national analysis tab
-- [ ] Add Afghanistan sub-national analysis tab
 
 
 ### Current data sources
