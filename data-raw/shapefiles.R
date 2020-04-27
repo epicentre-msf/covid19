@@ -22,7 +22,6 @@ sf_world <- world_map_raw %>%
 
 sf_europe_1 <- eurostat::get_eurostat_geospatial(output_class = "sf", nuts_level = 1)
 sf_europe_2 <- eurostat::get_eurostat_geospatial(output_class = "sf", nuts_level = 2)
-#sf_europe_3 <- eurostat::get_eurostat_geospatial(output_class = "sf", nuts_level = 3)
 
 
 # France ====================================================
