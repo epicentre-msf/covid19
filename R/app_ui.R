@@ -24,20 +24,9 @@ app_ui <- function() {
           )
         )
       )
-      #tabPanel("Epicurves", mod_facet_ui("facet_1", surveillance_df = surveillance_df)),
       
-      # footer = tagList(
-      #   tags$div(
-      #     class = "text-right", style = "padding-top: 20px; padding-right: 20px; color: grey;",
-      #     tags$p(
-      #       "Source: ",
-      #       tags$a(glue::glue("TLOH {latest_week}"), href = "https://data.humdata.org/dataset/0f9ae779-2095-4e17-a63f-26f1966369cb", target = "_blank"),
-      #       " | Visualisation: ", 
-      #       tags$a("Epicentre MSF", href = "https://epicentre.msf.org/", target = "_blank")
-      #     )
-      #   )
-      # )
     ),
+    HTML('<div data-iframe-height></div>'),
     waiter::waiter_show_on_load(html = waiter::spin_3())
   )
 }
@@ -62,6 +51,7 @@ golem_add_external_resources <- function(){
     shiny::includeHTML(system.file('app/www/ga.html', package = 'covid19')),
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
+    tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.2.10/iframeResizer.contentWindow.min.js", type="text/javascript"),
     tags$link(href = "https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap", rel = "stylesheet"),
     waiter::use_waiter(include_js = FALSE),
     shinyjs::useShinyjs(),
