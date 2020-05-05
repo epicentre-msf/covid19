@@ -45,6 +45,17 @@ body  {
   font-size: 60%;
 }
 
+@media only screen and (min-width : 320px) {
+  .countup {
+    font-size: 38px;
+  }
+}
+@media only screen and (min-width: 768px) {
+  .countup {
+    font-size: 2vw;
+  }
+}
+
 #map_1-map {
   min-height: 300px;
   height: -o-calc(50vh - 100px) !important; /* opera */
