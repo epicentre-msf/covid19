@@ -24,6 +24,7 @@ get_interventions_data <- function() {
     janitor::clean_names() %>% 
     dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date) %>% 
     dplyr::mutate(
+      measure = stringr::str_to_sentence(measure),
       country = countrycode::countrycode(iso, origin = "iso3c", destination = "country.name"),
       # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
       country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
