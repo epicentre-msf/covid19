@@ -12,11 +12,11 @@ app_ui <- function() {
       collapsible = TRUE,
       
       # tabs 
-      tabPanel("Global overview", icon = icon("globe-africa"), mod_map_ui("map_1")),
+      tabPanel(title = icon("globe-africa"), mod_map_ui("map_1")), #"Global overview", 
       
       tabPanel(
-        title = "About",
-        icon = icon("info-circle"), 
+        #title = "About",
+        title = icon("info"), 
         fluidRow(
           column(
             width = 8, offset = 2,
@@ -62,6 +62,7 @@ golem_add_external_resources <- function(){
     shiny::includeHTML(system.file('app/www/ga.html', package = 'covid19')),
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
+    tags$link(href = "https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap", rel = "stylesheet"),
     waiter::use_waiter(include_js = FALSE),
     shinyjs::useShinyjs(),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),

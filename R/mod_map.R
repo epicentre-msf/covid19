@@ -36,7 +36,7 @@ mod_map_ui <- function(id){
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"), 
           label = "Data source", 
-          choices = c("ECDC", "WHO", "JHU CSSE"),
+          choices = c("ECDC", "JHU CSSE"), #"WHO",
           justified = TRUE,
           size = "sm"
         )
@@ -72,15 +72,19 @@ mod_map_ui <- function(id){
     ),
     
     fluidRow(
+      col_2(
+        uiOutput(ns("totals"))
+      ),
+      
       shinydashboard::box(
-        width = 8, solidHeader = TRUE,
+        width = 6, solidHeader = TRUE,
         leaflet::leafletOutput(ns("map"))
       ),
       
       shinydashboard::box(
         #title = tags$b("Government interventions"), 
         width = 4, solidHeader = TRUE,
-        reactable::reactableOutput(ns("table"), height = 400)
+        reactable::reactableOutput(ns("table"))
       )
     ),
     
@@ -92,7 +96,7 @@ mod_map_ui <- function(id){
             tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;")#,
             #tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
           ),
-          highcharter::highchartOutput(ns("epicurve"), height = 300)
+          highcharter::highchartOutput(ns("epicurve"))
         )
       ),
       
@@ -129,7 +133,7 @@ mod_map_ui <- function(id){
             #tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
             #tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
           ),
-          highcharter::highchartOutput(ns("cumulative"), height = 300)
+          highcharter::highchartOutput(ns("cumulative"))
         )
       )
     )
@@ -147,6 +151,12 @@ mod_map_ui <- function(id){
 mod_map_server <- function(input, output, session){
   ns <- session$ns
   
+  w_totals <- waiter::Waiter$new(
+    id = c(ns("totals")),
+    html = waiter::spin_3(), 
+    color = waiter::transparent(alpha = 0)
+  )
+  
   w_map <- waiter::Waiter$new(
     id = c(ns("map")),
     html = waiter::spin_3(), 
@@ -160,7 +170,7 @@ mod_map_server <- function(input, output, session){
   )
   
   w_charts <- waiter::Waiter$new(
-    id = c( ns("epicurve"), ns("cumulative")),
+    id = c(ns("epicurve"), ns("cumulative")),
     html = waiter::spin_3(), 
     color = waiter::transparent(alpha = 0)
   )
@@ -281,9 +291,34 @@ mod_map_server <- function(input, output, session){
   
   # Outputs ========================================================
   
+  output$totals <- renderUI({
+    
+    w_totals$show()
+    
+    df <- df_data() %>% 
+      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
+      dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
+    
+    #cases <- sum(df$cases, na.rm = TRUE)
+    #cases <- scales::label_number_si(accuracy = 0.01)(cases)
+    
+    #deaths <- sum(df$deaths, na.rm = TRUE)
+    #deaths <- scales::label_number_si(accuracy = 0.01)(deaths)
+    
+    w_totals$hide()
+    
+    div(
+      class = "text-center",
+      h2(region_select(), style = "font-weight: bold;"),
+      shinydashboard::valueBox(countup::countup(df$cases), "Confirmed Cases", width = 12, color = "blue"),
+      shinydashboard::valueBox(countup::countup(df$deaths), "Confirmed Deaths", width = 12, color = "red")
+    )
+    
+  })
+  
   output$table <- reactable::renderReactable({
     
-    #w_tbl$show()
+    w_tbl$show()
     
     df <- df_gi()
     
@@ -311,8 +346,8 @@ mod_map_server <- function(input, output, session){
         }
       }
     )
-    return(rtbl)
     w_tbl$hide()
+    return(rtbl)
   })
   
   output$map <- renderLeaflet({
@@ -390,7 +425,7 @@ mod_map_server <- function(input, output, session){
           group = "Interventions"
         )
     }
-    w_map$hide()
+    #w_map$hide()
   })
   
   observe({
@@ -427,7 +462,7 @@ mod_map_server <- function(input, output, session){
         options = pathOptions(pane = "circles")
       ) %>% 
       addCircleLegend(
-        title = ind_lab,
+        title = paste("Confirmed", ind_lab),
         range = ind,
         scaling_fun = calc_radius,
         fillColor = "#57AACB", 
@@ -473,7 +508,7 @@ mod_map_server <- function(input, output, session){
         flyToBounds(bbox[["xmin"]], bbox[["ymin"]], bbox[["xmax"]], bbox[["ymax"]])
     }
     
-    w_map$hide()
+    #w_map$hide()
   })
   
   region_lab <- reactive({
@@ -494,6 +529,9 @@ mod_map_server <- function(input, output, session){
         iso == region_select(),
         measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
       ) %>% 
+      dplyr::group_by(measure) %>% 
+      dplyr::filter(date_implemented == min(date_implemented, na.rm = TRUE)) %>% 
+      dplyr::ungroup() %>% 
       dplyr::mutate(x = datetime_to_timestamp(date_implemented)) %>% 
       dplyr::select(x, measure) %>% 
       dplyr::distinct() %>% 

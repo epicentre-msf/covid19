@@ -32,7 +32,7 @@ pal20 <- c("#4E79A7FF", "#A0CBE8FF", "#F28E2BFF", "#FFBE7DFF", "#59A14FFF",
 hc_opts <- getOption("highcharter.chart")
 hc_opts$colors <- pal20
 
-fntfmly <- '"Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";'
+fntfmly <- '"Roboto Condensed",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";'
 
 options(
   highcharter.chart = hc_opts,

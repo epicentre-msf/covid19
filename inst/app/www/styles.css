@@ -1,7 +1,13 @@
 body  {
   margin-top: 60px;
   background-color: #fbfbfb;
+  font-family: 'Roboto Condensed', Helvetica, Arial, sans-serif !important;
 }
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto Condensed', Helvetica, Arial, sans-serif !important;
+}
+
 /*
 @media only screen and (min-width : 320px) {
   .tab-content {
@@ -40,7 +46,37 @@ body  {
 }
 
 #map_1-map {
-  height: 400px !important;
-  height: 40vh !important;
-  min-height: 400px;
+  min-height: 300px;
+  height: -o-calc(50vh - 100px) !important; /* opera */
+  height: -webkit-calc(50vh - 100px) !important; /* google, safari */
+  height: -moz-calc(50vh - 100px) !important; /* firefox */
+  height: calc(50vh - 100px) !important;
+}
+
+#map_1-table {
+  min-height: 300px;
+  height: -o-calc(50vh - 100px) !important; /* opera */
+  height: -webkit-calc(50vh - 100px) !important; /* google, safari */
+  height: -moz-calc(50vh - 100px) !important; /* firefox */
+  height: calc(50vh - 100px) !important;
+}
+
+.ReactTable{
+  height: 100% !important;
+}
+
+#map_1-epicurve {
+  min-height: 300px;
+  height: -o-calc(40vh - 100px) !important; /* opera */
+  height: -webkit-calc(40vh - 100px) !important; /* google, safari */
+  height: -moz-calc(40vh - 100px) !important; /* firefox */
+  height: calc(40vh - 100px) !important;
+}
+
+#map_1-cumulative {
+  min-height: 300px;
+  height: -o-calc(40vh - 100px) !important; /* opera */
+  height: -webkit-calc(40vh - 100px) !important; /* google, safari */
+  height: -moz-calc(40vh - 100px) !important; /* firefox */
+  height: calc(40vh - 100px) !important;
 }
