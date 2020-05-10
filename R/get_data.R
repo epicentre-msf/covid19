@@ -48,6 +48,9 @@ get_ecdc_data <- function() {
     dplyr::arrange(date) %>%
     dplyr::mutate_at(dplyr::vars(cases, deaths), ~ifelse(. < 0, 0L, .)) %>% 
     dplyr::mutate(
+      geoid = dplyr::case_when(
+        country_ecdc == "Namibia" ~ "NA", 
+        TRUE ~ geoid),
       country = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "country.name"),
       # make congo names more PC
       country = dplyr::case_when(
@@ -59,7 +62,7 @@ get_ecdc_data <- function() {
       source = "ECDC"
     ) %>% 
     dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2018, source)
-  
+    
   # df_ecdc <- NCoVUtils::get_ecdc_cases() %>% 
   #   dplyr::mutate(geoid = dplyr::case_when(
   #     country == "United_Kingdom" ~ "GB",
