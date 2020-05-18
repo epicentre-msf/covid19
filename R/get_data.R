@@ -41,10 +41,10 @@ get_ecdc_data <- function() {
   
   base_url <- "https://opendata.ecdc.europa.eu/covid19/casedistribution/csv"
   
-  d <- readr::read_csv(base_url) %>%
-    dplyr::mutate(date = as.Date(dateRep, format = "%d/%m/%Y")) %>%
-    dplyr::rename(geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2018 = popData2018) %>%
-    dplyr::select(-dateRep) %>%
+  readr::read_csv(base_url) %>%
+    # Adjust for one-day lag, because ECDC reports at 10am CET the next day
+    dplyr::mutate(date = as.Date(dateRep, format = "%d/%m/%Y") - 1) %>% 
+    dplyr::select(date, geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2018 = popData2018, cases, deaths) %>% 
     dplyr::arrange(date) %>%
     dplyr::mutate_at(dplyr::vars(cases, deaths), ~ifelse(. < 0, 0L, .)) %>% 
     dplyr::mutate(
@@ -62,25 +62,6 @@ get_ecdc_data <- function() {
       source = "ECDC"
     ) %>% 
     dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2018, source)
-    
-  # df_ecdc <- NCoVUtils::get_ecdc_cases() %>% 
-  #   dplyr::mutate(geoid = dplyr::case_when(
-  #     country == "United_Kingdom" ~ "GB",
-  #     country == "Greece" ~ "GR",
-  #     country == "French_Polynesia" ~ "PF",
-  #     TRUE ~ geoid
-  #   )) %>% 
-  #   dplyr::rename(country_ecdc = country) %>% 
-  #   dplyr::mutate(
-  #     country = countrycode::countrycode(geoid, origin = "iso2c", destination = "country.name"),
-  #     # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
-  #     country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
-  #     continent = countrycode::countrycode(geoid, origin = "iso2c", destination = "continent"),
-  #     region = countrycode::countrycode(geoid, origin = "iso2c", destination = "region"),
-  #     iso_a3 = countrycode::countrycode(geoid, origin = "iso2c", destination = "iso3c"),
-  #     source = "ECDC"
-  #   ) %>% 
-  #   dplyr::select(date, country_ecdc:geoid, country:iso_a3, cases, deaths, source)
 
 }
 

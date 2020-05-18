@@ -20,13 +20,16 @@ app_ui <- function() {
         fluidRow(
           column(
             width = 8, offset = 2,
-            includeMarkdown(system.file('app/www/about.md', package = 'covid19'))
+            tabsetPanel(
+              tabPanel("About", includeMarkdown(system.file('app/www/about.md', package = 'covid19'))),
+              tabPanel("Trends", includeMarkdown(system.file('app/www/trends.md', package = 'covid19')))
+            )
+            
           )
         )
       )
       
     ),
-    HTML('<div data-iframe-height></div>'),
     waiter::waiter_show_on_load(html = waiter::spin_3())
   )
 }
@@ -51,7 +54,7 @@ golem_add_external_resources <- function(){
     shiny::includeHTML(system.file('app/www/ga.html', package = 'covid19')),
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
-    tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.2.10/iframeResizer.contentWindow.min.js", type="text/javascript"),
+    tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.5.16/iframeResizer.contentWindow.min.js", type="text/javascript"),
     tags$link(href = "https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap", rel = "stylesheet"),
     waiter::use_waiter(include_js = FALSE),
     shinyjs::useShinyjs(),

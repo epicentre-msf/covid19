@@ -1,3 +1,4 @@
+
 # Set options here
 options(golem.app.prod = FALSE) # TRUE = production mode, FALSE = development mode
 
@@ -7,6 +8,10 @@ golem::detach_all_attached()
 
 # Document and reload your package
 golem::document_and_reload()
+
+#library(reactlog)
+# tell shiny to log all reactivity
+#options(shiny.reactlog = TRUE)
 
 # Run the application
 covid19::run_app(lb = TRUE)

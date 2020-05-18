@@ -24,7 +24,7 @@ mod_map_ui <- function(id){
   
   tagList(
     fluidRow(
-      col_2(
+      col_3(
         selectInput(
           ns("region"), 
           "Region focus", 
@@ -32,7 +32,7 @@ mod_map_ui <- function(id){
           width = "100%"
         )
       ),
-      col_2(
+      col_3(
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"), 
           label = "Data source", 
@@ -41,7 +41,7 @@ mod_map_ui <- function(id){
           size = "sm"
         )
       ),
-      col_2(
+      col_3(
         shinyWidgets::radioGroupButtons(
           inputId = ns("indicator"), 
           label = "Indicator", 
@@ -50,7 +50,7 @@ mod_map_ui <- function(id){
           size = "sm"
         )
       ),
-      col_2(
+      col_3(
         dateRangeInput(
           ns("time_period"),
           label = "Time period",
@@ -60,15 +60,15 @@ mod_map_ui <- function(id){
           end = Sys.Date(),
           width = "100%"
         )
-      ),
-      col_4(
-        selectInput(
-          ns("intervention"),
-          "Interventions",
-          choices = c("Highlight government interventions" = "", sort(unique(df_interventions$measure))),
-          width = "100%"
-        )
       )
+      # col_4(
+      #   selectInput(
+      #     ns("intervention"),
+      #     "Interventions",
+      #     choices = c("Highlight government interventions" = "", sort(unique(df_interventions$measure))),
+      #     width = "100%"
+      #   )
+      # )
     ),
     
     fluidRow(
@@ -281,13 +281,13 @@ mod_map_server <- function(input, output, session){
     return(df)
   })
   
-  df_gi <- reactive({
-    
-    df <- df_interventions
-    if (input$intervention != "") df <- df %>% dplyr::filter(measure == input$intervention)
-    return(df)
-    
-  })
+  # df_gi <- reactive({
+  #   
+  #   df <- df_interventions
+  #   if (input$intervention != "") df <- df %>% dplyr::filter(measure == input$intervention)
+  #   return(df)
+  #   
+  # })
   
   # Outputs ========================================================
   
@@ -320,7 +320,7 @@ mod_map_server <- function(input, output, session){
     
     w_tbl$show()
     
-    df <- df_gi()
+    df <- df_interventions
     
     df <- df %>% 
       filter_geo(region_select(), region_type(), iso_col = iso) %>% 
@@ -358,9 +358,9 @@ mod_map_server <- function(input, output, session){
       addMapPane(name = "borders", zIndex = 430) %>%
       addMapPane(name = "circles", zIndex = 440) %>%
       addMapPane(name = "place_labels", zIndex = 450) %>%
-      addProviderTiles("CartoDB.PositronNoLabels", group = "No Labels") %>%
-      addProviderTiles("CartoDB.PositronNoLabels", group = "Labels") %>%
-      addProviderTiles("CartoDB.PositronOnlyLabels", group = "Labels", 
+      addProviderTiles("CartoDB.PositronNoLabels") %>%
+      #addProviderTiles("CartoDB.PositronNoLabels", group = "Labels") %>%
+      addProviderTiles("CartoDB.PositronOnlyLabels", group = "Place Labels", 
                        options = leafletOptions(pane = "place_labels")) %>%
       setView(0, 40, zoom = 2) %>% 
       #addScaleBar(position = "bottomleft") %>% 
@@ -369,63 +369,116 @@ mod_map_server <- function(input, output, session){
       leaflet.extras::addFullscreenControl(position = "topleft") %>% 
       leaflet.extras::addResetMapButton() %>% 
       addLayersControl(
-        baseGroups = c("Labels", "No Labels"),
-        overlayGroups = c("Indicators", "Interventions"),
+        #baseGroups = c("Labels", "No Labels"),
+        overlayGroups = c("Place Labels", "Trends", "Cases/Deaths"),
         position = "topleft"
       )
     
   })
   
-  observeEvent(df_gi(), {
+  # observeEvent(df_gi(), {
+  #   
+  #   if (input$intervention == "" | nrow(df_gi()) < 1) {
+  #     leafletProxy("map", session) %>%
+  #       clearGroup("Interventions") %>% 
+  #       removeControl(layerId = "choro_legend")
+  #   } else {
+  #     
+  #     df <- df_gi()
+  #     
+  #     if (input$region != "Worldwide") {
+  #       if (input$region %in% continents) {
+  #         df <- df %>% dplyr::filter(continent == input$region)
+  #       } else {
+  #         df <- df %>% dplyr::filter(region == input$region)
+  #       }
+  #     }
+  #     
+  #     countries <- unique(df$iso)
+  #     
+  #     sf_df <- sf_world %>% dplyr::filter(iso_a3 %in% countries)
+  #     
+  #     #popup_cols <- c("country", "measure", "date_implemented", "comments")
+  #     
+  #     leafletProxy("map", session) %>%
+  #       clearGroup("Interventions") %>%
+  #       removeControl(layerId = "choro_legend") %>% 
+  #       addPolygons(
+  #         data = sf_df,
+  #         stroke = TRUE,
+  #         color = "white",
+  #         weight = 1,
+  #         fillColor = "red",
+  #         fillOpacity = .4,
+  #         label = ~country,
+  #         #popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
+  #         highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
+  #         group = "Interventions",
+  #         options = pathOptions(pane = "choropleth")
+  #       ) %>% 
+  #       addLegend(
+  #         position = "bottomright",
+  #         title = "Intervention",
+  #         colors = "red",
+  #         labels = isolate(break_text_html(input$intervention)),
+  #         layerId = "choro_legend",
+  #         group = "Interventions"
+  #       )
+  #   }
+  #   #w_map$hide()
+  # })
+  
+  observe({
+    #browser()
     
-    if (input$intervention == "" | nrow(df_gi()) < 1) {
-      leafletProxy("map", session) %>%
-        clearGroup("Interventions") %>% 
-        removeControl(layerId = "choro_legend")
-    } else {
-      
-      df <- df_gi()
-      
-      if (input$region != "Worldwide") {
-        if (input$region %in% continents) {
-          df <- df %>% dplyr::filter(continent == input$region)
-        } else {
-          df <- df %>% dplyr::filter(region == input$region)
-        }
+    df <- df_trends
+    
+    if (input$region != "Worldwide") {
+      if (input$region %in% continents) {
+        df <- df %>% dplyr::filter(continent == input$region)
+      } else {
+        df <- df %>% dplyr::filter(region == input$region)
       }
-      
-      countries <- unique(df$iso)
-      
-      sf_df <- sf_world %>% dplyr::filter(iso_a3 %in% countries)
-      
-      #popup_cols <- c("country", "measure", "date_implemented", "comments")
-      
-      leafletProxy("map", session) %>%
-        clearGroup("Interventions") %>%
-        removeControl(layerId = "choro_legend") %>% 
-        addPolygons(
-          data = sf_df,
-          stroke = TRUE,
-          color = "white",
-          weight = 1,
-          fillColor = "red",
-          fillOpacity = .4,
-          label = ~country,
-          #popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
-          highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
-          group = "Interventions",
-          options = pathOptions(pane = "choropleth")
-        ) %>% 
-        addLegend(
-          position = "bottomright",
-          title = "Intervention",
-          colors = "red",
-          labels = isolate(break_text_html(input$intervention)),
-          layerId = "choro_legend",
-          group = "Interventions"
-        )
     }
-    #w_map$hide()
+    
+    ind_lab <- stringr::str_to_title(input$indicator)
+    
+    sf_df <- sf_world %>% dplyr::inner_join(df, by = "iso_a3")
+    sf_df$trend <- sf_df[[paste0("trend_", input$indicator)]]
+    
+    RdAmGn <- c('#D95F02','#E6AB02','#1B9E77')
+    lvls <- c("Increasing", "Stable", "Declining")
+    
+    pal <- leaflet::colorFactor(palette = RdAmGn, levels = lvls)
+    
+    #popup_cols <- c("country", "measure", "date_implemented", "comments")
+    
+    leafletProxy("map", session) %>%
+      clearGroup("Trends") %>%
+      removeControl(layerId = "choro_legend") %>% 
+      addPolygons(
+        data = sf_df,
+        stroke = TRUE,
+        color = "white",
+        weight = 1,
+        fillColor = ~pal(trend),
+        fillOpacity = .4,
+        #label = ~iso_a3,
+        #popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
+        highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
+        group = "Trends",
+        options = pathOptions(pane = "choropleth")
+      ) %>% 
+      addLegend(
+        position = "bottomright",
+        #pal = pal,
+        #values = ~trend,
+        colors = c(RdAmGn, "#808080"),
+        labels = c(lvls, "NA"),
+        title = paste(ind_lab, "Trend"),
+        layerId = "choro_legend",
+        group = "Trends"
+      )
   })
   
   observe({
@@ -434,15 +487,15 @@ mod_map_server <- function(input, output, session){
     ind_lab <- stringr::str_to_title(input$indicator)
     
     leafletProxy("map", session) %>% 
-      clearGroup("Indicators") %>%
+      clearGroup("Cases/Deaths") %>%
       removeControl(layerId = "circle_legend") %>% 
       addPolygons(
         data = dat,
         stroke = FALSE,
         fillOpacity = 0,
-        label = ~glue::glue("<b>{country}</b><br>Cases: {cases}<br>Deaths: {deaths}") %>% purrr::map(htmltools::HTML),
+        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases)}<br>Deaths: {scales::number(deaths)}") %>% purrr::map(htmltools::HTML),
         layerId = ~iso_a3,
-        group = "Indicators",
+        #group = "Indicators",
         options = pathOptions(pane = "polygons")
       ) %>% 
       addCircleMarkers(
@@ -455,10 +508,10 @@ mod_map_server <- function(input, output, session){
         weight = 1, 
         color = "#FFFFFF", 
         opacity = 1, 
-        label = ~glue::glue("<b>{country}</b><br>Cases: {cases}<br>Deaths: {deaths}") %>% purrr::map(htmltools::HTML),
+        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases)}<br>Deaths: {scales::number(deaths)}") %>% purrr::map(htmltools::HTML),
         #popup = leafpop::popupTable(dat, zcol = c("country", "cases"), row.numbers = FALSE, feature.id = FALSE),
         layerId = ~paste0(iso_a3, "_mrkr"),
-        group = "Indicators",
+        group = "Cases/Deaths",
         options = pathOptions(pane = "circles")
       ) %>% 
       addCircleLegend(
@@ -471,7 +524,7 @@ mod_map_server <- function(input, output, session){
         color = "#FFFFFF", 
         position = "topright",
         layerId = "circle_legend",
-        group = "Indicators"
+        group = "Cases/Deaths"
       )
     
     w_map$hide()
