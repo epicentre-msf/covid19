@@ -362,7 +362,7 @@ mod_map_server <- function(input, output, session){
       #addProviderTiles("CartoDB.PositronNoLabels", group = "Labels") %>%
       addProviderTiles("CartoDB.PositronOnlyLabels", group = "Place Labels", 
                        options = leafletOptions(pane = "place_labels")) %>%
-      setView(0, 40, zoom = 2) %>% 
+      setView(0, 40, zoom = 1) %>% 
       #addScaleBar(position = "bottomleft") %>% 
       addControl(tags$div(tag.map.title, HTML("click country on<br>map to filter")), 
                  position = "bottomleft", className="map-title", layerId = "title") %>% 
@@ -537,7 +537,7 @@ mod_map_server <- function(input, output, session){
     if (r_type == "global") {
       leafletProxy("map", session) %>% 
         clearGroup("Borders") %>% 
-        flyTo(0, 40, zoom = 2)
+        flyTo(0, 40, zoom = 1)
     } else {
       
       if (r_type == "continent") {

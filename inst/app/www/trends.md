@@ -3,7 +3,7 @@
 
 ---
 
-Trends are estimated daily on the number of cases and deaths in ECDC data observed over a period of  12 days. The most recent 2 days of data are not included considered as counts may not yet be complete due to reporting delays. For example, if data is available as of the 14th of a given month, trends will be calculated on the period from 1st-12th of that month.
+Trends are estimated daily on the number of cases and deaths in ECDC data observed over a period of  12 days. The most recent 2 days of data are not considered, as counts may not yet be complete due to reporting delays. For example, if data is available as of the 14th of a given month, trends will be calculated on the period from 1st-12th of that month.
 
 On the 12-day time-series we first carry a smoothing using a 3-day moving average. As a result, we obtain 10-day smoothed values for which we run a linear regression of the values in the natural logarithm scale using the following formula:
 
