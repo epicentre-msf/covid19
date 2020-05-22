@@ -4,8 +4,12 @@ library(forecast)
 library(sandwich)
 pkgload::load_all()
 
-model_cnt_cases_linear  <- make_model_cnt_linear(df = df_ecdc, series = 'cases', time_unit_extent = 12, min_sum = 30)
-model_cnt_deaths_linear  <- make_model_cnt_linear(df = df_ecdc, series = 'deaths', time_unit_extent = 12, min_sum = 30)
+# don't model on the 2 most recent days as data might not be complete due to reporting delays
+use_date <- max(df_ecdc$date) - 2
+trend_data <- df_ecdc %>% dplyr::filter(date <= use_date)
+
+model_cnt_cases_linear  <- make_model_cnt_linear(df = trend_data, series = 'cases', time_unit_extent = 12, min_sum = 30)
+model_cnt_deaths_linear  <- make_model_cnt_linear(df = trend_data, series = 'deaths', time_unit_extent = 12, min_sum = 30)
 
 o_vars <-  c("coeff", "lwr", "upr")
 l_cnt_vars <- setNames(as.vector(o_vars), paste0('l_cnt_', o_vars))

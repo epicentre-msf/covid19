@@ -65,6 +65,51 @@ get_ecdc_data <- function() {
 
 }
 
+#' Model trends from ECDC Data
+#' @export
+get_trends_data <- function(df_ecdc) {
+  
+  library(growthrates)
+  library(forecast)
+  library(sandwich)
+  
+  # don't model on the 2 most recent days as data might not be complete due to reporting delays
+  use_date <- max(df_ecdc$date) - 2
+  trend_data <- df_ecdc %>% dplyr::filter(date <= use_date)
+  
+  model_cnt_cases_linear  <- make_model_cnt_linear(df = trend_data, series = 'cases', time_unit_extent = 12, min_sum = 30)
+  model_cnt_deaths_linear  <- make_model_cnt_linear(df = trend_data, series = 'deaths', time_unit_extent = 12, min_sum = 30)
+  
+  o_vars <-  c("coeff", "lwr", "upr")
+  l_cnt_vars <- setNames(as.vector(o_vars), paste0('l_cnt_', o_vars))
+  
+  df_cases <- dplyr::rename(model_cnt_cases_linear[[3]] , tidyselect::all_of(l_cnt_vars)) %>% 
+    dplyr::mutate(
+      trend_linear = case_when(
+        l_cnt_lwr > 0 ~ "increasing", 
+        l_cnt_upr < 0 ~ "declining", 
+        l_cnt_upr > 0 & l_cnt_lwr < 0 ~ "stable", 
+        TRUE ~ NA_character_) %>% 
+        factor(levels = c('increasing', 'stable','declining'), 
+               labels = c('Increasing', 'Stable','Declining'))
+    ) %>% 
+    dplyr::select(iso_a3, trend_cases = trend_linear)
+  
+  df_deaths <- dplyr::rename(model_cnt_deaths_linear[[3]] , tidyselect::all_of(l_cnt_vars)) %>% 
+    dplyr::mutate(
+      trend_linear = case_when(
+        l_cnt_lwr > 0 ~ "increasing", 
+        l_cnt_upr < 0 ~ "declining", 
+        l_cnt_upr > 0 & l_cnt_lwr < 0 ~ "stable", 
+        TRUE ~ NA_character_) %>% 
+        factor(levels = c('increasing', 'stable','declining'), 
+               labels = c('Increasing', 'Stable','Declining'))
+    ) %>% 
+    dplyr::select(iso_a3, trend_deaths = trend_linear)
+  
+  dplyr::distinct(df_ecdc, continent, region, country, iso_a3) %>% dplyr::inner_join(dplyr::full_join(df_cases, df_deaths))
+}
+
 
 #' Import WHO dataset
 #' 
