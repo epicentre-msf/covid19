@@ -1,7 +1,9 @@
 if (Sys.info()["nodename"] == "vps709766") {
   setwd("/srv/shiny-server/covid19")
+  linelist_dir <- "/home/epicentre/covid-linelist-dashboard/data"
 } else {
   setwd(here::here())
+  linelist_dir <- "~/epicentre/covid.linelist.dashboard/data"
 }
 
 library(tidyverse)
@@ -22,6 +24,12 @@ df_jhcsse <- get_jhcsse_data()
 
 data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
+# save as package data
 usethis::use_data(df_interventions, df_ecdc, df_trends, df_jhcsse, data_updated, overwrite = TRUE)
 
+# launch new session of app for new connections
 system("touch restart.txt")
+
+# also save trends data into linelist dashboard package
+save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
+

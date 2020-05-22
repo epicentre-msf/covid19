@@ -107,7 +107,15 @@ get_trends_data <- function(df_ecdc) {
     ) %>% 
     dplyr::select(iso_a3, trend_deaths = trend_linear)
   
-  dplyr::distinct(df_ecdc, continent, region, country, iso_a3) %>% dplyr::inner_join(dplyr::full_join(df_cases, df_deaths))
+  df_ecdc %>% 
+    dplyr::group_by(continent, region, country, iso_a3) %>% 
+    dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::inner_join(
+      dplyr::full_join(df_cases, df_deaths)
+    )
+  
+  #dplyr::distinct(df_ecdc, continent, region, country, iso_a3) %>% dplyr::inner_join(dplyr::full_join(df_cases, df_deaths))
 }
 
 
