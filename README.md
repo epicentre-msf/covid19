@@ -11,10 +11,21 @@ The goal of this dashboard is to provide an epidemiological overview of the COVI
 
 It is being actively developed by the data science team at [Epicentre MSF](https://epicentre.msf.org/en).
 
-Future plans include more detailed analysis at sub-national levels and incorporation of data collected at MSF hospitals.
-
 The tool is built using the R programming language and the shiny web framework. Packages used include the tidyverse, leaflet and highcharter.
 
+### Setup Data
+
+To set up data for the app, source [`data-raw/data.R`](data-raw/data.R) and [`data-raw/shapefiles.R`](data-raw/shapefiles.R).
+
+### Development
+
+The primary shiny code can be found in the [`R/mod_map.R`](R/mod_map.R) module.
+
+### Run in dev mode
+
+To run the application, source [`dev/run_dev.R`](dev/run_dev.R)
+
+---
 
 ### Current data sources
 
@@ -24,9 +35,9 @@ The tool is built using the R programming language and the shiny web framework. 
 
 [Data on the geographic distribution of COVID-19 cases worldwide](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
-#### World Health Organisation
+#### Center for Systems Science and Engineering (CSSE) at Johns Hopkins University (JHU)
 
-[WHO situation reports. Data extracted by Eric Brown](https://github.com/eebrown/data2019nCoV)
+[Novel Coronavirus (COVID-19) Cases, provided by JHU CSSE](https://github.com/CSSEGISandData/COVID-19)
 
 #### ACAPS COVID-19: Government Measures Dataset 
 

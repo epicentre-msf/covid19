@@ -54,16 +54,12 @@ golem_add_external_resources <- function(){
     shiny::includeHTML(system.file('app/www/ga.html', package = 'covid19')),
     golem::activate_js(),
     golem::favicon("www/favicon.png"),
-    tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.5.16/iframeResizer.contentWindow.min.js", type="text/javascript"),
+    #tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.5.16/iframeResizer.contentWindow.min.js", type="text/javascript"),
     tags$link(href = "https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap", rel = "stylesheet"),
     waiter::use_waiter(include_js = FALSE),
     shinyjs::useShinyjs(),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
     tags$script(src="www/addNavLink.js"),
     shinyWidgets::useShinydashboard()
-    # Add here all the external resources
-    # If you have a custom.css in the inst/app/www
-    # Or for example, you can add shinyalert::useShinyalert() here
-    #tags$link(rel="stylesheet", type="text/css", href="www/custom.css")
   )
 }

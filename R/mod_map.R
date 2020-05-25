@@ -120,18 +120,6 @@ mod_map_ui <- function(id){
                 #uiOutput(ns("n_days_ui"))
               )
             )
-            # tags$div(
-            #   style = "display: inline-block;",
-            #   checkboxGroupInput(ns("c_params"), label = "", inline = TRUE,
-            #                      choices = c("log scale" = "log", "set days since" = "days"))
-            # ),
-            # tags$div(
-            #   style = "display: inline-block;",
-            #   numericInput(ns("n_days"), label = "n days", value = 10, min = 0, step = 10)
-            # )
-            #tags$div(style = "display: inline-block; padding-right: 10px;"),
-            #tags$div(checkboxInput(ns("log"), label = "log scale", value = FALSE), style = "width: 100px; display: inline-block;"),
-            #tags$div(checkboxInput(ns("set_day0"), label = "set to day 0", value = FALSE), style = "width: 100px; display: inline-block;")
           ),
           highcharter::highchartOutput(ns("cumulative"))
         )
@@ -299,12 +287,6 @@ mod_map_server <- function(input, output, session){
       filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
     
-    #cases <- sum(df$cases, na.rm = TRUE)
-    #cases <- scales::label_number_si(accuracy = 0.01)(cases)
-    
-    #deaths <- sum(df$deaths, na.rm = TRUE)
-    #deaths <- scales::label_number_si(accuracy = 0.01)(deaths)
-    
     w_totals$hide()
     
     div(
@@ -429,7 +411,6 @@ mod_map_server <- function(input, output, session){
   # })
   
   observe({
-    #browser()
     
     df <- df_trends
     
@@ -668,62 +649,12 @@ mod_map_server <- function(input, output, session){
                  label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
           })
         )
-      
-      #max_n <- max(df[[input$indicator]], na.rm = TRUE)
-
-      # lockdowns <- df_interventions %>%
-      #   dplyr::filter(
-      #     iso == region_select(), 
-      #     measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
-      #   ) %>% 
-      #   dplyr::transmute(
-      #     x = datetime_to_timestamp(date_implemented), min = 0, max = max_n, 
-      #     measure = measure, comments = comments
-      #   ) %>% 
-      #   tidyr::pivot_longer(cols = c(min, max), names_to = "key", values_to = "y") %>% 
-      #   dplyr::arrange(x, measure, comments, y) %>% 
-      #   dplyr::distinct()
-      # 
-      # if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
-      #   lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
-      # }
-      # 
-      # lockdowns <- lockdowns %>% dplyr::group_split(x, measure, comments)
-      
-      # purrr::walk(lockdowns, ~{
-      #   p <<- p %>%
-      #     hc_add_series(
-      #       data = .x,
-      #       type = "line",
-      #       color = "grey",
-      #       enableMouseTracking = FALSE,
-      #       showInLegend = FALSE
-      #     )
-      # })
-      # 
-      # p <- p %>% 
-      #   hc_annotations(
-      #     list(
-      #       draggable = "xy",  
-      #       labels = purrr::map(rev(lockdowns), ~{
-      #           df <- .x
-      #           list(point = list(x = unique(df$x), y = max(df$y),  xAxis = 0, yAxis = 0),
-      #                text = break_text_html(unique(df$measure), width = 10), align = "center")
-      #         }),
-      #       labelOptions = list(allowOverlap = FALSE, x = -50, y = 0)
-      #     )
-      #   )
     }
 
     return(p)
     
     w_charts$hide()
   })
-  
-  # output$n_days_ui <- renderUI({
-  #   if (!input$set_days) return(NULL)
-  #   numericInput(ns("n_days"), label = paste("n", input$indicator), value = 10, min = 1, step = 10)
-  # })
   
   observeEvent(input$indicator, {
     updateNumericInput(session, "n_days", label = paste("n", input$indicator)) 
@@ -830,10 +761,4 @@ mod_map_server <- function(input, output, session){
   })
   
 }
-
-## To be copied in the UI
-# mod_map_ui("map_1")
-
-## To be copied in the server
-# callModule(mod_map_server, "map_1")
 
