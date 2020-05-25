@@ -5,8 +5,6 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
----
-
 The goal of this dashboard is to provide an epidemiological overview of the COVID-19 pandemic, incorporating data from multiple sources. 
 
 It is being actively developed by the data science team at [Epicentre MSF](https://epicentre.msf.org/en).
@@ -28,8 +26,6 @@ To run the application, source [`dev/run_dev.R`](dev/run_dev.R)
 ---
 
 ### Current data sources
-
----
 
 #### European Centre for Disease Prevention and Control 
 
