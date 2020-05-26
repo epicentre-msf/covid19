@@ -5,3 +5,5 @@ dev_history.R
 ^dev$
 $run_dev.*
 ^app\.R$
+^renv$
+^renv\.lock$
