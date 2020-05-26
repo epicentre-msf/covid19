@@ -282,7 +282,6 @@ mod_map_server <- function(input, output, session){
   output$totals <- renderUI({
     
     w_totals$show()
-    
     df <- df_data() %>% 
       filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
@@ -303,7 +302,6 @@ mod_map_server <- function(input, output, session){
     w_tbl$show()
     
     df <- df_interventions
-    
     df <- df %>% 
       filter_geo(region_select(), region_type(), iso_col = iso) %>% 
       dplyr::select(date_implemented, country, measure, comments)
@@ -321,19 +319,33 @@ mod_map_server <- function(input, output, session){
         measure = reactable::colDef(name = "Intervention"),
         comments = reactable::colDef(show = FALSE)
       ),
-      details = function(index) {
-        comment <- df[index,]$comments
-        if(!is.na(comment)) {
-          htmltools::div(style = "padding: 10px", comment)
-        }
-      }
+      # This is >4 secs faster, but shows expand icon in each row
+      details = reactable::colDef(
+        name = "",
+        details = reactable::JS(
+          "function(rowInfo) {
+           if (rowInfo.row['comments'] !== null) {
+             return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
+           }
+           return '<div style = \"padding: 10px\">No further information available</div>';
+         }"
+        ),
+        html = TRUE,
+        width = 60
+      )
+      # details = function(index) {
+      #   comment <- df[index,]$comments
+      #   if(!is.na(comment)) {
+      #     htmltools::div(style = "padding: 10px", comment)
+      #   }
+      # }
     )
+    
     w_tbl$hide()
     return(rtbl)
   })
   
   output$map <- renderLeaflet({
-    
     leaflet() %>%
       addMapPane(name = "choropleth", zIndex = 410) %>%
       addMapPane(name = "polygons", zIndex = 420) %>%
@@ -355,7 +367,6 @@ mod_map_server <- function(input, output, session){
         overlayGroups = c("Place Labels", "Trends", "Cases/Deaths"),
         position = "topleft"
       )
-    
   })
   
   # observeEvent(df_gi(), {
@@ -583,19 +594,27 @@ mod_map_server <- function(input, output, session){
   
   output$epicurve <- renderHighchart({
     #w$show()
-    
     df <- df_epicurve()
     ind <- rlang::sym(input$indicator)
     
     x_min <- datetime_to_timestamp(as.Date(input$time_period[1]))
     y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
-    
-    #browser()
-
     #title <- paste(region_lab(), "daily", input$indicator)
     y_lab <- stringr::str_to_title(input$indicator)
     
-    p <- hchart(df, type = "column", hcaes(date, !!ind, group = country)) %>% # name = input$indicator
+    mapping <- hcaes(date, !!ind, group = country)
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
+    series <- data_to_series(data, type = "column")
+    opts <- highcharter:::data_to_options(data, "column")
+    
+    p <- highchart() %>% 
+      hc_add_series_list(series) %>% 
+      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
+      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
+      hc_plotOptions(
+        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
+        scatter = list(marker = list(symbol = "circle"))
+      ) %>% 
       hc_chart(zoomType = "x") %>% 
       #hc_title(text = title) %>% 
       #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
@@ -638,9 +657,7 @@ mod_map_server <- function(input, output, session){
         x = -10,
         y = 40
       )
-    
     if (region_type() == "country") {
-      
       p <- p %>% 
         hc_xAxis(
           plotLines = purrr::map(rev(lockdown_lines()), ~{
@@ -650,7 +667,7 @@ mod_map_server <- function(input, output, session){
           })
         )
     }
-
+    
     return(p)
     
     w_charts$hide()
@@ -702,7 +719,19 @@ mod_map_server <- function(input, output, session){
     y_min <- ifelse(input$log, 1, 0)
     y_min <- ifelse(input$set_days, input$n_days, y_min)
     
-    p <- hchart(df, type = "line", hcaes(date, !!ind, group = country)) %>% #, name = input$indicator
+    mapping <- hcaes(date, !!ind, group = country)
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
+    series <- data_to_series(data, type = "line")
+    opts <- highcharter:::data_to_options(data, "line")
+    
+    p <- highchart() %>% 
+      hc_add_series_list(series) %>% 
+      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
+      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
+      hc_plotOptions(
+        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
+        scatter = list(marker = list(symbol = "circle"))
+      ) %>% 
       hc_chart(zoomType = "x") %>% 
       #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
       hc_xAxis(
@@ -761,4 +790,3 @@ mod_map_server <- function(input, output, session){
   })
   
 }
-
