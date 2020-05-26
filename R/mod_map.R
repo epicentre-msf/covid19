@@ -603,7 +603,7 @@ mod_map_server <- function(input, output, session){
     y_lab <- stringr::str_to_title(input$indicator)
     
     mapping <- hcaes(date, !!ind, group = country)
-    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group)) %>% date_to_timestamp("x")
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
     series <- data_to_series(data, type = "column")
     opts <- highcharter:::data_to_options(data, "column")
     
@@ -614,7 +614,8 @@ mod_map_server <- function(input, output, session){
       hc_plotOptions(
         series = list(showInLegend = opts$series_plotOptions_showInLegend), 
         scatter = list(marker = list(symbol = "circle"))
-      ) %>% 
+      ) 
+    p %>% 
       hc_chart(zoomType = "x") %>% 
       #hc_title(text = title) %>% 
       #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
@@ -720,7 +721,7 @@ mod_map_server <- function(input, output, session){
     y_min <- ifelse(input$set_days, input$n_days, y_min)
     
     mapping <- hcaes(date, !!ind, group = country)
-    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group)) %>% date_to_timestamp("x")
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
     series <- data_to_series(data, type = "line")
     opts <- highcharter:::data_to_options(data, "line")
     

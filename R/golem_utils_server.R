@@ -137,6 +137,7 @@ date_to_timestamp <- function(data, column) {
 data_to_series <- function(data, type) {
   
   cols_to_use <- setdiff(colnames(data), "group")
+  data <- date_to_timestamp(data, "x")
   
   split(data, data$group) %>% 
     purrr::imap(
