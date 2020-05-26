@@ -614,8 +614,7 @@ mod_map_server <- function(input, output, session){
       hc_plotOptions(
         series = list(showInLegend = opts$series_plotOptions_showInLegend), 
         scatter = list(marker = list(symbol = "circle"))
-      ) 
-    p %>% 
+      ) %>% 
       hc_chart(zoomType = "x") %>% 
       #hc_title(text = title) %>% 
       #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
