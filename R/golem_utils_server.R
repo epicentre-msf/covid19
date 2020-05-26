@@ -111,3 +111,38 @@ filter_geo <- function(df, r_filter, r_type, iso_col = iso_a3) {
   }
   return(df)
 }
+
+numeric_to_date <- function(data_row, column) {
+  data_row[[column]] <- as.Date(data_row[[column]], origin = "1970-01-01")
+  return(data_row)
+}
+
+factor_to_char <- function(data, column) {
+  data[[column]] <- as.character(data[[column]])
+  return(data)
+}
+
+date_to_timestamp <- function(data, column) {
+  if (lubridate::is.Date(data[[column]])) {
+    data[[column]] <- datetime_to_timestamp(data[[column]])
+  }
+  return(data)
+}
+
+#' Custom and faster version of highcharter:::data_to_series
+#' 
+#' @description 
+#' It should be only applied for grouped data containing date column. 
+#  Can be extended in the future for general use.
+data_to_series <- function(data, type) {
+  
+  cols_to_use <- setdiff(colnames(data), "group")
+  
+  split(data, data$group) %>% 
+    purrr::imap(
+      ~ list(name = .y, 
+             data = purrr::transpose(.x[, cols_to_use]) %>% purrr::modify(numeric_to_date, column = "date"), 
+             type = type
+      )
+    ) %>% unname() 
+}
