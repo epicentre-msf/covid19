@@ -301,7 +301,7 @@ mod_map_server <- function(input, output, session){
     
     w_tbl$show()
     
-    df <- df_interventions
+    df <- df_interventions %>% tidyr::drop_na(iso, measure)
     df <- df %>% 
       filter_geo(region_select(), region_type(), iso_col = iso) %>% 
       dplyr::select(date_implemented, country, measure, comments)
