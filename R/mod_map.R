@@ -657,9 +657,7 @@ mod_map_server <- function(input, output, session){
         x = -10,
         y = 40
       )
-    tictoc::toc()
     if (region_type() == "country") {
-      tictoc::tic()
       p <- p %>% 
         hc_xAxis(
           plotLines = purrr::map(rev(lockdown_lines()), ~{
@@ -668,7 +666,6 @@ mod_map_server <- function(input, output, session){
                  label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
           })
         )
-      tictoc::toc()
     }
     
     return(p)
