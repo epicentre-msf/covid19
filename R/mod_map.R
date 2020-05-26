@@ -327,7 +327,7 @@ mod_map_server <- function(input, output, session){
            if (rowInfo.row['comments'] !== null) {
              return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
            }
-           return '<div style = \"padding: 10px\">No actions available</div>';
+           return '<div style = \"padding: 10px\">No further information available</div>';
          }"
         ),
         html = TRUE,
