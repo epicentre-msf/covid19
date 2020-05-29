@@ -8,3 +8,5 @@ renv
 data-raw/shapefiles
 data
 restart.txt
+dev/.rcache/*
+

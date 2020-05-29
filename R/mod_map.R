@@ -136,8 +136,11 @@ mod_map_ui <- function(id){
 #' @keywords internal
 #' @import leaflet
 #' @import highcharter
-mod_map_server <- function(input, output, session){
+mod_map_server <- function(input, output, session, use_cache = TRUE){
   ns <- session$ns
+  if (use_cache) {
+    cache_storage <- memoise::cache_filesystem("./.rcache")
+  }
   
   w_totals <- waiter::Waiter$new(
     id = c(ns("totals")),
@@ -297,13 +300,10 @@ mod_map_server <- function(input, output, session){
     
   })
   
-  output$table <- reactable::renderReactable({
-    
-    w_tbl$show()
-    
-    df <- df_interventions %>% tidyr::drop_na(iso, measure)
+  render_table <- function(data, selected_region, region_type) {
+    df <- data %>% tidyr::drop_na(iso, measure)
     df <- df %>% 
-      filter_geo(region_select(), region_type(), iso_col = iso) %>% 
+      filter_geo(selected_region, region_type, iso_col = iso) %>% 
       dplyr::select(date_implemented, country, measure, comments)
     
     rtbl <- reactable::reactable(
@@ -340,7 +340,23 @@ mod_map_server <- function(input, output, session){
       #   }
       # }
     )
+  }
+  
+  if (use_cache) {
+    render_table_active <- memoise::memoise(render_table, cache = cache_storage)
+  } else {
+    render_table_active <- render_table
+  }
+  
+  output$table <- reactable::renderReactable({
     
+    w_tbl$show()
+    
+    selected_region_value <- region_select()
+    region_type_value <- region_type()
+
+    rtbl <- render_table_active(df_interventions, selected_region_value, region_type_value)
+
     w_tbl$hide()
     return(rtbl)
   })
