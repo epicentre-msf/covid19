@@ -28,6 +28,8 @@ usethis::use_data(df_interventions, df_ecdc, df_trends, df_jhcsse, data_updated,
 
 
 if (is_server) {
+  # remove old cache files
+  file.remove(list.files(file.path("/srv/shiny-server/covid19", ".rcache"), full.names = TRUE))
   # launch new session of app for new connections
   system("touch restart.txt")
   
