@@ -139,6 +139,239 @@ mod_map_ui <- function(id){
 mod_map_server <- function(input, output, session){
   ns <- session$ns
   
+  render_table <- function(data, selected_region, region_type) {
+    df <- data %>% tidyr::drop_na(iso, measure)
+    df <- df %>% 
+      filter_geo(selected_region, region_type, iso_col = iso) %>% 
+      dplyr::select(date_implemented, country, measure, comments)
+    
+    rtbl <- reactable::reactable(
+      data = df,
+      height = 400, searchable = FALSE, defaultSorted = "date_implemented", 
+      compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
+      showSortable = TRUE, filterable = TRUE, 
+      columns = list(
+        date_implemented = reactable::colDef(name = "Date implemented", 
+                                             defaultSortOrder = "desc",
+                                             filterable = FALSE),
+        country = reactable::colDef(name = "Country"),
+        measure = reactable::colDef(name = "Intervention"),
+        comments = reactable::colDef(show = FALSE)
+      ),
+      # This is >4 secs faster, but shows expand icon in each row
+      details = reactable::colDef(
+        name = "",
+        details = reactable::JS(
+          "function(rowInfo) {
+           if (rowInfo.row['comments'] !== null) {
+             return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
+           }
+           return '<div style = \"padding: 10px\">No further information available</div>';
+         }"
+        ),
+        html = TRUE,
+        width = 60
+      )
+      # details = function(index) {
+      #   comment <- df[index,]$comments
+      #   if(!is.na(comment)) {
+      #     htmltools::div(style = "padding: 10px", comment)
+      #   }
+      # }
+    )
+  }
+  
+  render_epicurve <- function(data, indicator, time_period, region_type, lockdown_lines) {
+    df <- data
+    ind <- rlang::sym(indicator)
+    
+    x_min <- datetime_to_timestamp(as.Date(time_period[1]))
+    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+    #title <- paste(region_lab(), "daily", input$indicator)
+    y_lab <- stringr::str_to_title(indicator)
+    
+    mapping <- hcaes(date, !!ind, group = country)
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
+    series <- data_to_series(data, type = "column")
+    opts <- highcharter:::data_to_options(data, "column")
+    
+    p <- highchart() %>% 
+      hc_add_series_list(series) %>% 
+      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
+      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
+      hc_plotOptions(
+        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
+        scatter = list(marker = list(symbol = "circle"))
+      ) %>% 
+      hc_chart(zoomType = "x") %>% 
+      #hc_title(text = title) %>% 
+      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
+      hc_xAxis(
+        title = list(text = ""),
+        min = datetime_to_timestamp(as.Date(time_period[1])),
+        max = datetime_to_timestamp(as.Date(time_period[2]))
+      ) %>% 
+      hc_yAxis_multiples(
+        list(
+          title = list(text = y_lab), 
+          #stackLabels = list(enabled = TRUE, align = "center"),
+          allowDecimals = FALSE
+        ),
+        list(
+          title = list(text = ""), 
+          allowDecimals = FALSE,
+          opposite = TRUE,
+          linkedTo = 0
+        )
+      ) %>%
+      hc_plotOptions(
+        line = list(zIndex = 1, dashStyle = "ShortDash"),
+        column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
+      ) %>% 
+      hc_annotations(
+        list(
+          draggable = "",
+          labels = list(
+            list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
+                 text = "click + drag horizontally<br>to zoom charts", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+          )
+        )
+      ) %>% 
+      hc_legend(
+        #title = list(text = "Top 9 + other"),
+        layout = "vertical",
+        align = "right",
+        verticalAlign = "top",
+        x = -10,
+        y = 40
+      )
+    if (region_type == "country") {
+      p <- p %>% 
+        hc_xAxis(
+          plotLines = purrr::map(rev(lockdown_lines), ~{
+            df <- .x
+            list(color = "red", zIndex = 1, value = unique(df$x), 
+                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
+          })
+        )
+    }
+    return(p)
+  }
+  
+  render_cumulative <- function(data, indicator, time_period, set_days, n_days, log, region_type, lockdown_lines) {
+    df <- data %>% 
+      dplyr::group_by(country) %>% 
+      dplyr::arrange(date) %>% 
+      dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>% 
+      dplyr::ungroup()
+    
+    ind <- rlang::sym(indicator)
+    
+    x_min <-  datetime_to_timestamp(as.Date(time_period[1]))
+    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
+    
+    
+    if (set_days) {
+      req(n_days)
+      df <- df %>% 
+        dplyr::group_by(country) %>% 
+        tidyr::drop_na({{ind}}) %>% 
+        dplyr::filter({{ind}} >= n_days) %>% 
+        dplyr::mutate(date = seq_along({{ind}})-1) %>% 
+        dplyr::ungroup()
+      
+      x_min <- min(df$date, na.rm = TRUE)
+    }
+    
+    validate(need(nrow(df) > 0, "No countries meet the criteria..."))
+    
+    #title <- paste(region_lab(), "cumulative", input$indicator)
+    xlab <- ifelse(set_days, paste("Days since first", n_days, indicator), "")
+    
+    y_lab <- stringr::str_to_title(indicator)
+    if (log) y_lab <- paste(y_lab, "(log scale)")
+    y_type <- ifelse(log, "logarithmic", "linear")
+    y_min <- ifelse(log, 1, 0)
+    y_min <- ifelse(set_days, n_days, y_min)
+    
+    mapping <- hcaes(date, !!ind, group = country)
+    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
+    series <- data_to_series(data, type = "line")
+    opts <- highcharter:::data_to_options(data, "line")
+    
+    p <- highchart() %>% 
+      hc_add_series_list(series) %>% 
+      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
+      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
+      hc_plotOptions(
+        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
+        scatter = list(marker = list(symbol = "circle"))
+      ) %>% 
+      hc_chart(zoomType = "x") %>% 
+      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
+      hc_xAxis(
+        title = list(text = xlab)
+        #min = datetime_to_timestamp(as.Date(input$time_period[1])),
+        #max = datetime_to_timestamp(as.Date(input$time_period[2]))
+      ) %>% 
+      hc_yAxis_multiples(
+        list(
+          title = list(text = y_lab), 
+          allowDecimals = FALSE,
+          type = y_type,
+          min = y_min
+        ),
+        list(
+          title = list(text = ""), 
+          allowDecimals = FALSE,
+          type = y_type,
+          opposite = TRUE,
+          min = y_min,
+          linkedTo = 0
+        )
+      ) %>%
+      hc_plotOptions(
+        line = list(zIndex = 2)
+      ) %>% 
+      # hc_annotations(
+      #   list(
+      #     draggable = "",
+      #     labels = list(
+      #       list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
+      #            text = "click + drag horizontally to zoom", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+      #     )
+      #   )
+      # ) %>% 
+      hc_legend(
+        #title = list(text = "Top 9 + other"), 
+        layout = "proximate", 
+        align = "right"
+      ) 
+    
+    if (region_type == "country") {
+      p <- p %>% 
+        hc_xAxis(
+          plotLines = purrr::map(rev(lockdown_lines), ~{
+            df <- .x
+            list(color = "red", zIndex = 1, value = unique(df$x), 
+                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
+          })
+        )
+    }
+    return(p)
+  }
+  
+  if (getOption("use.cache", default = TRUE)) {
+    cache_storage <- memoise::cache_filesystem(getOption("cache.path", default = "./.rcache"))
+    render_table_active <- memoise::memoise(render_table, cache = cache_storage)
+    render_epicurve_active <- memoise::memoise(render_epicurve, cache = cache_storage)
+    render_cumulative_active <- memoise::memoise(render_cumulative, cache = cache_storage)
+  } else {
+    render_table_active <- render_table
+    render_epicurve_active <- render_epicurve
+    render_cumulative_active <- render_cumulative
+  }
+  
   w_totals <- waiter::Waiter$new(
     id = c(ns("totals")),
     html = waiter::spin_3(), 
@@ -301,46 +534,11 @@ mod_map_server <- function(input, output, session){
     
     w_tbl$show()
     
-    df <- df_interventions %>% tidyr::drop_na(iso, measure)
-    df <- df %>% 
-      filter_geo(region_select(), region_type(), iso_col = iso) %>% 
-      dplyr::select(date_implemented, country, measure, comments)
-    
-    rtbl <- reactable::reactable(
-      data = df,
-      height = 400, searchable = FALSE, defaultSorted = "date_implemented", 
-      compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump", 
-      showSortable = TRUE, filterable = TRUE, 
-      columns = list(
-        date_implemented = reactable::colDef(name = "Date implemented", 
-                                             defaultSortOrder = "desc",
-                                             filterable = FALSE),
-        country = reactable::colDef(name = "Country"),
-        measure = reactable::colDef(name = "Intervention"),
-        comments = reactable::colDef(show = FALSE)
-      ),
-      # This is >4 secs faster, but shows expand icon in each row
-      details = reactable::colDef(
-        name = "",
-        details = reactable::JS(
-          "function(rowInfo) {
-           if (rowInfo.row['comments'] !== null) {
-             return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
-           }
-           return '<div style = \"padding: 10px\">No further information available</div>';
-         }"
-        ),
-        html = TRUE,
-        width = 60
-      )
-      # details = function(index) {
-      #   comment <- df[index,]$comments
-      #   if(!is.na(comment)) {
-      #     htmltools::div(style = "padding: 10px", comment)
-      #   }
-      # }
-    )
-    
+    selected_region_value <- region_select()
+    region_type_value <- region_type()
+
+    rtbl <- render_table_active(df_interventions, selected_region_value, region_type_value)
+
     w_tbl$hide()
     return(rtbl)
   })
@@ -594,80 +792,13 @@ mod_map_server <- function(input, output, session){
   
   output$epicurve <- renderHighchart({
     #w$show()
-    df <- df_epicurve()
-    ind <- rlang::sym(input$indicator)
-    
-    x_min <- datetime_to_timestamp(as.Date(input$time_period[1]))
-    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
-    #title <- paste(region_lab(), "daily", input$indicator)
-    y_lab <- stringr::str_to_title(input$indicator)
-    
-    mapping <- hcaes(date, !!ind, group = country)
-    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
-    series <- data_to_series(data, type = "column")
-    opts <- highcharter:::data_to_options(data, "column")
-    
-    p <- highchart() %>% 
-      hc_add_series_list(series) %>% 
-      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
-      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
-      hc_plotOptions(
-        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
-        scatter = list(marker = list(symbol = "circle"))
-      ) %>% 
-      hc_chart(zoomType = "x") %>% 
-      #hc_title(text = title) %>% 
-      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
-      hc_xAxis(
-        title = list(text = ""),
-        min = datetime_to_timestamp(as.Date(input$time_period[1])),
-        max = datetime_to_timestamp(as.Date(input$time_period[2]))
-      ) %>% 
-      hc_yAxis_multiples(
-        list(
-          title = list(text = y_lab), 
-          #stackLabels = list(enabled = TRUE, align = "center"),
-          allowDecimals = FALSE
-        ),
-        list(
-          title = list(text = ""), 
-          allowDecimals = FALSE,
-          opposite = TRUE,
-          linkedTo = 0
-        )
-      ) %>%
-      hc_plotOptions(
-        line = list(zIndex = 1, dashStyle = "ShortDash"),
-        column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
-      ) %>% 
-      hc_annotations(
-        list(
-          draggable = "",
-          labels = list(
-            list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
-                 text = "click + drag horizontally<br>to zoom charts", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
-          )
-        )
-      ) %>% 
-      hc_legend(
-        #title = list(text = "Top 9 + other"),
-        layout = "vertical",
-        align = "right",
-        verticalAlign = "top",
-        x = -10,
-        y = 40
-      )
-    if (region_type() == "country") {
-      p <- p %>% 
-        hc_xAxis(
-          plotLines = purrr::map(rev(lockdown_lines()), ~{
-            df <- .x
-            list(color = "red", zIndex = 1, value = unique(df$x), 
-                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
-          })
-        )
-    }
-    
+    data_value <- df_epicurve()
+    indicator_value <- input$indicator
+    time_period_value <- input$time_period
+    region_type_value <- region_type()
+    lockdown_lines_value <- lockdown_lines()
+    p <- render_epicurve_active(data_value, indicator_value, time_period_value, region_type_value, lockdown_lines_value)
+
     return(p)
     
     w_charts$hide()
@@ -683,106 +814,19 @@ mod_map_server <- function(input, output, session){
   
   output$cumulative <- renderHighchart({
     #w$show()
+    data_value <- df_epicurve()
+    indicator_value <- input$indicator
+    time_period_value <- input$time_period
+    set_days_value <- input$set_days
+    n_days_value <- input$n_days
+    log_value <- input$log
+    region_type_value <- region_type()
+    lockdown_lines_value <- lockdown_lines()
     
-    df <- df_epicurve() %>% 
-      dplyr::group_by(country) %>% 
-      dplyr::arrange(date) %>% 
-      dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>% 
-      dplyr::ungroup()
-    
-    ind <- rlang::sym(input$indicator)
-    
-    x_min <-  datetime_to_timestamp(as.Date(input$time_period[1]))
-    y_max <- df %>% dplyr::count(date, wt = {{ind}}) %>% dplyr::pull(n) %>% max
-    
-    
-    if (input$set_days) {
-      req(input$n_days)
-      df <- df %>% 
-        dplyr::group_by(country) %>% 
-        tidyr::drop_na({{ind}}) %>% 
-        dplyr::filter({{ind}} >= input$n_days) %>% 
-        dplyr::mutate(date = seq_along({{ind}})-1) %>% 
-        dplyr::ungroup()
-      
-      x_min <- min(df$date, na.rm = TRUE)
-    }
-    
-    validate(need(nrow(df) > 0, "No countries meet the criteria..."))
-    
-    #title <- paste(region_lab(), "cumulative", input$indicator)
-    xlab <- ifelse(input$set_days, paste("Days since first", input$n_days, input$indicator), "")
-    
-    y_lab <- stringr::str_to_title(input$indicator)
-    if (input$log) y_lab <- paste(y_lab, "(log scale)")
-    y_type <- ifelse(input$log, "logarithmic", "linear")
-    y_min <- ifelse(input$log, 1, 0)
-    y_min <- ifelse(input$set_days, input$n_days, y_min)
-    
-    mapping <- hcaes(date, !!ind, group = country)
-    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
-    series <- data_to_series(data, type = "line")
-    opts <- highcharter:::data_to_options(data, "line")
-    
-    p <- highchart() %>% 
-      hc_add_series_list(series) %>% 
-      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>% 
-      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>% 
-      hc_plotOptions(
-        series = list(showInLegend = opts$series_plotOptions_showInLegend), 
-        scatter = list(marker = list(symbol = "circle"))
-      ) %>% 
-      hc_chart(zoomType = "x") %>% 
-      #hc_subtitle(text = "click + drag horizontally to zoom") %>% 
-      hc_xAxis(
-        title = list(text = xlab)
-        #min = datetime_to_timestamp(as.Date(input$time_period[1])),
-        #max = datetime_to_timestamp(as.Date(input$time_period[2]))
-      ) %>% 
-      hc_yAxis_multiples(
-        list(
-          title = list(text = y_lab), 
-          allowDecimals = FALSE,
-          type = y_type,
-          min = y_min
-        ),
-        list(
-          title = list(text = ""), 
-          allowDecimals = FALSE,
-          type = y_type,
-          opposite = TRUE,
-          min = y_min,
-          linkedTo = 0
-        )
-      ) %>%
-      hc_plotOptions(
-        line = list(zIndex = 2)
-      ) %>% 
-      # hc_annotations(
-      #   list(
-      #     draggable = "",
-      #     labels = list(
-      #       list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0), 
-      #            text = "click + drag horizontally to zoom", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
-      #     )
-      #   )
-      # ) %>% 
-      hc_legend(
-        #title = list(text = "Top 9 + other"), 
-        layout = "proximate", 
-        align = "right"
-      ) 
-    
-    if (region_type() == "country") {
-      p <- p %>% 
-        hc_xAxis(
-          plotLines = purrr::map(rev(lockdown_lines()), ~{
-            df <- .x
-            list(color = "red", zIndex = 1, value = unique(df$x), 
-                 label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left"))
-          })
-        )
-    }
+    p <- render_cumulative_active(
+      data_value, indicator_value, time_period_value, set_days_value, 
+      n_days_value, log_value, region_type_value, lockdown_lines_value
+    )
     
     return(p)
     

@@ -35,7 +35,8 @@ Imports:
     metathis,
     shinyjs,
     leaflet.extras,
-    countup
+    countup,
+    memoise (>= 1.1.0)
 RoxygenNote: 6.1.1
 URL: https://github.com/epicentre-msf/covid19
 BugReports: https://github.com/epicentre-msf/covid19/issues
