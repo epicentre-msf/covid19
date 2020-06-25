@@ -683,7 +683,7 @@ mod_map_server <- function(input, output, session){
         data = dat,
         stroke = FALSE,
         fillOpacity = 0,
-        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases)}<br>Deaths: {scales::number(deaths)}") %>% purrr::map(htmltools::HTML),
+        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases, accuracy = 1)}<br>Deaths: {scales::number(deaths, accuracy = 1)}") %>% purrr::map(htmltools::HTML),
         layerId = ~iso_a3,
         #group = "Indicators",
         options = pathOptions(pane = "polygons")
@@ -698,7 +698,7 @@ mod_map_server <- function(input, output, session){
         weight = 1, 
         color = "#FFFFFF", 
         opacity = 1, 
-        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases)}<br>Deaths: {scales::number(deaths)}") %>% purrr::map(htmltools::HTML),
+        label = ~glue::glue("<b>{country}</b><br>Cases: {scales::number(cases, accuracy = 1)}<br>Deaths: {scales::number(deaths, accuracy = 1)}") %>% purrr::map(htmltools::HTML),
         #popup = leafpop::popupTable(dat, zcol = c("country", "cases"), row.numbers = FALSE, feature.id = FALSE),
         layerId = ~paste0(iso_a3, "_mrkr"),
         group = "Cases/Deaths",

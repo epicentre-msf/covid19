@@ -44,7 +44,7 @@ get_ecdc_data <- function() {
   readr::read_csv(base_url) %>%
     # Adjust for one-day lag, because ECDC reports at 10am CET the next day
     dplyr::mutate(date = as.Date(dateRep, format = "%d/%m/%Y") - 1) %>% 
-    dplyr::select(date, geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2018 = popData2018, cases, deaths) %>% 
+    dplyr::select(date, geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2019 = popData2019, cases, deaths) %>% 
     dplyr::arrange(date) %>%
     dplyr::mutate_at(dplyr::vars(cases, deaths), ~ifelse(. < 0, 0L, .)) %>% 
     dplyr::mutate(
@@ -61,7 +61,7 @@ get_ecdc_data <- function() {
       region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
       source = "ECDC"
     ) %>% 
-    dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2018, source)
+    dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2019, source)
 
 }
 
@@ -252,10 +252,18 @@ clean_jhcsse_data <- function(path, type = c("cases", "deaths")) {
     dplyr::summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
     dplyr::ungroup()
   
+  df_aus <- df_raw %>% 
+    dplyr::filter(`Country/Region` == "Australia", !is.na(`Province/State`)) %>% 
+    dplyr::select(-Lat, -Long) %>% 
+    dplyr::group_by(`Country/Region`) %>% 
+    dplyr::summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+    dplyr::ungroup()
+  
   df_raw %>% 
     dplyr::filter(is.na(`Province/State`), `Country/Region` != "China") %>% # filter to only countries
     dplyr::select(-`Province/State`, -Lat, -Long) %>% 
     dplyr::bind_rows(df_china) %>% 
+    dplyr::bind_rows(df_aus) %>% 
     dplyr::rename(country_jh = `Country/Region`) %>% 
     tidyr::pivot_longer(-country_jh, names_to = "date", values_to = type) %>% 
     dplyr::mutate(date = as.Date(date, format = "%m/%d/%y")) %>% 
