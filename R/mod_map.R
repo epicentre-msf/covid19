@@ -513,22 +513,58 @@ mod_map_server <- function(input, output, session){
   # Outputs ========================================================
   
   output$totals <- renderUI({
-    
+
     w_totals$show()
-    df <- df_data() %>% 
-      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
+    df <- df_data() %>%
+      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
-    
+
     w_totals$hide()
-    
+
     div(
       class = "text-center",
       h2(region_select(), style = "font-weight: bold;"),
       shinydashboard::valueBox(countup::countup(df$cases), "Confirmed Cases", width = 12, color = "blue"),
       shinydashboard::valueBox(countup::countup(df$deaths), "Confirmed Deaths", width = 12, color = "red")
     )
-    
+
   })
+  
+  # output$totals <- renderUI({
+  #   
+  #   df_ts <- df_data() %>% 
+  #     filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>% 
+  #     dplyr::filter(
+  #       date >= input$time_period[1],
+  #       date <= input$time_period[2]
+  #     ) %>% 
+  #     dplyr::group_by(date) %>% 
+  #     dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>% 
+  #     dplyr::ungroup()
+  #   
+  #   hc_cases <- hchart(df_ts, "column", hcaes(date, cases), name = "Daily cases")  %>% 
+  #     hc_elementId(id = "hc-cases-mini") %>% 
+  #     #hc_chart(className = "hc-hide") %>% 
+  #     #hc_size(height = 100) %>% 
+  #     hc_credits(enabled = FALSE) %>% 
+  #     hc_add_theme(hc_theme_sparkline_vb()) 
+  #   
+  #   hc_deaths <- hchart(df_ts, "column", hcaes(date, deaths), name = "Daily deaths")  %>% 
+  #     hc_elementId(id = "hc-deaths-mini") %>% 
+  #     #hc_chart(className = "hc-hide") %>% 
+  #     #hc_size(height = 100) %>% 
+  #     hc_credits(enabled = FALSE) %>% 
+  #     hc_add_theme(hc_theme_sparkline_vb()) 
+  #   
+  #   df_total <- df_ts %>% dplyr::summarise(cases = sum(cases), deaths = sum(deaths))
+  #   
+  #   div(
+  #     div(class = "text-center", h2(region_select(), style = "font-weight: bold;")),
+  #     valueBoxSpark(value = countup::countup(df_total$cases), title = "Confirmed Cases", sparkobj = hc_cases, width = 12, color = "blue"),
+  #     valueBoxSpark(value = countup::countup(df_total$deaths), title = "Confirmed Deaths", sparkobj = hc_deaths, width = 12, color = "red")
+  #   )
+  #   
+  # })
   
   output$table <- reactable::renderReactable({
     

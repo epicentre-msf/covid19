@@ -54,7 +54,30 @@ body  {
   .countup {
     font-size: 2vw;
   }
+  
+  #hc-cases-mini, #hc-deaths-mini {
+    height: -o-calc(15vh - 100px) !important; /* opera */
+    height: -webkit-calc(15vh - 100px) !important; /* google, safari */
+    height: -moz-calc(15vh - 100px) !important; /* firefox */
+    height: calc(15vh - 100px) !important;
+  }
 }
+
+/*
+.hc-hide {
+  height: -o-calc(15vh - 100px) !important; 
+  height: -webkit-calc(15vh - 100px) !important; 
+  height: -moz-calc(15vh - 100px) !important; 
+  height: calc(15vh - 100px) !important;
+}
+
+.highchart {
+  height: -o-calc(15vh - 100px) !important; 
+  height: -webkit-calc(15vh - 100px) !important; 
+  height: -moz-calc(15vh - 100px) !important; 
+  height: calc(15vh - 100px) !important;
+}
+*/
 
 #map_1-map {
   min-height: 300px;

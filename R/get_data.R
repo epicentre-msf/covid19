@@ -29,7 +29,7 @@ get_interventions_data <- function() {
       # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
       country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
       continent = countrycode::countrycode(iso, origin = "iso3c", destination = "continent"),
-      region = countrycode::countrycode(iso, origin = "iso3c", destination = "region")
+      region = countrycode::countrycode(iso, origin = "iso3c", destination = "region23")
     ) 
 }
 
@@ -57,7 +57,7 @@ get_ecdc_data <- function() {
   
   df %>%
     # Adjust for one-day lag, because ECDC reports at 10am CET the next day
-    dplyr::mutate(date = as.Date(dateRep, format = "%d/%m/%Y") - 1) %>% 
+    dplyr::mutate(date = lubridate::make_date(year, month, day) - 1) %>% 
     dplyr::select(date, geoid = geoId, country_ecdc = countriesAndTerritories, iso_a3 = countryterritoryCode, population_2019 = popData2019, cases, deaths) %>% 
     dplyr::arrange(date) %>%
     dplyr::mutate_at(dplyr::vars(cases, deaths), ~ifelse(. < 0, 0L, .)) %>% 
@@ -72,7 +72,7 @@ get_ecdc_data <- function() {
         country == "Congo - Brazzaville" ~ "Republic of Congo",
         TRUE ~ country),
       continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
-      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region23"),
       source = "ECDC"
     ) %>% 
     dplyr::select(date, country_ecdc:geoid, country:region, iso_a3, cases, deaths, population_2019, source)
@@ -188,7 +188,7 @@ get_who_data <- function() {
       # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
       country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
       continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
-      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region23"),
       source = "WHO"
     )
   
@@ -249,7 +249,7 @@ get_jhcsse_data <- function() {
         country == "Congo - Brazzaville" ~ "Republic of Congo",
         TRUE ~ country),
       continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
-      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region"),
+      region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region23"),
       source = "JHCSSE"
     ) %>% 
     dplyr::select(date, country_jh, iso_a3, country:region, cases, deaths, source)
