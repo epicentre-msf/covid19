@@ -20,7 +20,7 @@ get_interventions_data <- function() {
   filename <- "interventions.xlsx"
   curl::curl_download(dl_url, destfile = fs::path(temp, filename))
 
-  readxl::read_excel(fs::path(temp, filename), sheet = "Database") %>% 
+  readxl::read_excel(fs::path(temp, filename), sheet = "Dataset") %>% 
     janitor::clean_names() %>% 
     dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date) %>% 
     dplyr::mutate(
