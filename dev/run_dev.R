@@ -16,3 +16,4 @@ golem::document_and_reload()
 # Run the application
 covid19::run_app(lb = TRUE)
 
+

@@ -23,10 +23,11 @@ get_interventions_data <- function() {
   readxl::read_excel(fs::path(temp, filename), sheet = "Dataset") %>% 
     janitor::clean_names() %>% 
     dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date) %>% 
+    # date_implemented is being read as excel numeric now 
+    dplyr::mutate(date_implemented = janitor::excel_numeric_to_date(date_implemented)) %>% 
     dplyr::mutate(
       measure = stringr::str_to_sentence(measure),
       country = countrycode::countrycode(iso, origin = "iso3c", destination = "country.name"),
-      # countrycode gives DRC the name of 'Congo - Kinshasa' for some reason? fix this
       country = dplyr::case_when(country == "Congo - Kinshasa" ~ "Democratic Republic of the Congo", TRUE ~ country),
       continent = countrycode::countrycode(iso, origin = "iso3c", destination = "continent"),
       region = countrycode::countrycode(iso, origin = "iso3c", destination = "region23")
