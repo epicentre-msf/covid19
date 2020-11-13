@@ -24,7 +24,7 @@ get_interventions_data <- function() {
     janitor::clean_names() %>% 
     dplyr::mutate_if(lubridate::is.POSIXct, lubridate::as_date) %>% 
     # date_implemented is being read as excel numeric now 
-    dplyr::mutate(date_implemented = janitor::excel_numeric_to_date(date_implemented)) %>% 
+    #dplyr::mutate(date_implemented = janitor::excel_numeric_to_date(date_implemented)) %>% 
     dplyr::mutate(
       measure = stringr::str_to_sentence(measure),
       country = countrycode::countrycode(iso, origin = "iso3c", destination = "country.name"),
