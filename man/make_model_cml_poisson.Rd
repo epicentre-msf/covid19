@@ -9,8 +9,7 @@ Model data for each country
 smoodthing using a predefined window 
 Then making a linear regression}
 \usage{
-make_model_cml_poisson(series, df, time_unit_extent = 12,
-  min_sum = 100)
+make_model_cml_poisson(series, df, time_unit_extent = 12, min_sum = 100)
 }
 \description{
 Split dataset in a list of data frames

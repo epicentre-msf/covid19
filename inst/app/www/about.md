@@ -16,11 +16,11 @@ If you are part of the MSF network, you can access further Epicentre COVID-19 co
 
 #### European Centre for Disease Prevention and Control 
 
-[Data on the geographic distribution of COVID-19 cases worldwide](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+[Data on the geographic distribution of COVID-19 cases worldwide](https://www.ecdc.europa.eu/en/covid-19/data)
 
 #### Center for Systems Science and Engineering (CSSE) at Johns Hopkins University (JHU)
 
-[Novel Coronavirus (COVID-19) Cases, provided by JHU CSSE](https://github.com/CSSEGISandData/COVID-19)
+[Data imported from the Our World in Data github repository](https://github.com/owid/covid-19-data/tree/master/public/data/jhu)
 
 #### ACAPS COVID-19: Government Measures Dataset 
 

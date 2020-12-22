@@ -9,11 +9,9 @@ golem::detach_all_attached()
 # Document and reload your package
 golem::document_and_reload()
 
-#library(reactlog)
+# library(reactlog)
 # tell shiny to log all reactivity
-#options(shiny.reactlog = TRUE)
+# options(shiny.reactlog = TRUE)
 
 # Run the application
-covid19::run_app(lb = TRUE)
-
-
+covid19::run_app(lb = FALSE)

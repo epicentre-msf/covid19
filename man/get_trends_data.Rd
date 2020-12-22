@@ -4,7 +4,7 @@
 \alias{get_trends_data}
 \title{Model trends from ECDC Data}
 \usage{
-get_trends_data(df_ecdc)
+get_trends_data(df)
 }
 \description{
 Model trends from ECDC Data

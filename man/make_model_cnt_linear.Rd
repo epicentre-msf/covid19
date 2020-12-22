@@ -8,8 +8,13 @@ Fill the gaps in the time-series, assuming that at missing date, cases and death
 Smoothing using moving average with a parameterable time-window (in days)
 Model time-series using a linear regression}
 \usage{
-make_model_cnt_linear(series, df = df_ecdc, time_unit_extent = 12,
-  ma_window = 3, min_sum = 30)
+make_model_cnt_linear(
+  series,
+  df = df_ecdc,
+  time_unit_extent = 12,
+  ma_window = 3,
+  min_sum = 30
+)
 }
 \description{
 Split dataset into a list of time-series, one for each country (splitting uses the iso_a3 variable)

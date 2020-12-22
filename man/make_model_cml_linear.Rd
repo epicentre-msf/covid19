@@ -7,8 +7,12 @@ Create a cumulative sum
 Filter to a time frame defined by time_unit_extent
 Model data for each country using a linear regression of the cumulative count}
 \usage{
-make_model_cml_linear(series, df = dfc_ecdc, time_unit_extent = 12,
-  min_sum = 100)
+make_model_cml_linear(
+  series,
+  df = dfc_ecdc,
+  time_unit_extent = 12,
+  min_sum = 100
+)
 }
 \description{
 Split dataset in a list of data frames
