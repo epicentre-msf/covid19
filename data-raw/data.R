@@ -12,7 +12,9 @@ pkgload::load_all()
 
 df_interventions <- get_interventions_data()
 
-df_ecdc <- get_ecdc_weekly()
+# not working when run on server
+# running locally and sending to server for now
+# df_ecdc <- get_ecdc_weekly()
 
 df_jhcsse <- get_owid_jhcsse()
 
@@ -21,7 +23,7 @@ df_trends <- get_trends_data(df_jhcsse)
 data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
 # save as package data
-usethis::use_data(df_interventions, df_ecdc, df_trends, df_jhcsse, data_updated, overwrite = TRUE)
+usethis::use_data(df_interventions, df_trends, df_jhcsse, data_updated, overwrite = TRUE)
 
 if (is_server) {
   # remove old cache files
