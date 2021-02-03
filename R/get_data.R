@@ -83,10 +83,10 @@ get_ecdc_weekly <- function() {
 get_owid_jhcsse <- function(url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/jhu/full_data.csv") {
   df_raw <- readr::read_csv(url, guess_max = 60000)
   df_raw %>%
-    dplyr::filter(!location %in% c("International", "World")) %>%
+    dplyr::filter(!location %in% c("International", "World"), !is.na(date)) %>%
     dplyr::mutate(
       iso_a3 = countrycode::countrycode(location, "country.name", "iso3c"),
-      iso_a3 = dplyr::case_when(location == "Timor" ~ "TLS", TRUE ~ iso_a3),
+      iso_a3 = dplyr::case_when(location == "Timor" ~ "TLS", location == "Micronesia (country)" ~ "FSM", TRUE ~ iso_a3),
       continent = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "continent"),
       region = countrycode::countrycode(iso_a3, origin = "iso3c", destination = "region23"),
       continent = dplyr::case_when(location == "Kosovo" ~ "Europe", TRUE ~ continent),

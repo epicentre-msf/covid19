@@ -9,4 +9,4 @@ data-raw/shapefiles
 data
 restart.txt
 .rcache/*
-
+*.log
