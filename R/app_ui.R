@@ -30,7 +30,8 @@ app_ui <- function() {
       )
       
     ),
-    waiter::waiter_show_on_load(html = waiter::spin_3())
+    waiter::waiter_show_on_load(html = waiter::spin_3()),
+    waiter::waiter_hide_on_render("map_1-cumulative")
   )
 }
 
@@ -56,7 +57,7 @@ golem_add_external_resources <- function(){
     golem::favicon("www/favicon.png"),
     #tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.5.16/iframeResizer.contentWindow.min.js", type="text/javascript"),
     tags$link(href = "https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap", rel = "stylesheet"),
-    waiter::use_waiter(include_js = FALSE),
+    waiter::use_waiter(),
     shinyjs::useShinyjs(),
     tags$link(rel="stylesheet", type="text/css", href="www/styles.css"),
     tags$script(src="www/addNavLink.js"),

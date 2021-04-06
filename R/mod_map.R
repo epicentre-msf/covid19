@@ -54,12 +54,26 @@ mod_map_ui <- function(id) {
         dateRangeInput(
           ns("time_period"),
           label = "Time period",
-          min = min(df_ecdc$date, na.rm = TRUE),
-          max = Sys.Date(),
-          start = min(df_ecdc$date, na.rm = TRUE),
-          end = Sys.Date(),
+          min = min(df_jhcsse$date, na.rm = TRUE),
+          max = max(df_jhcsse$date, na.rm = TRUE),
+          start = min(df_jhcsse$date, na.rm = TRUE),
+          end = max(df_jhcsse$date, na.rm = TRUE),
+          # value = c(
+          #   min(df_jhcsse$date, na.rm = TRUE),
+          #   max(df_jhcsse$date, na.rm = TRUE)
+          # ),
+          # step = 1,
           width = "100%"
         )
+        # dateRangeInput(
+        #   ns("time_period"),
+        #   label = "Time period",
+        #   min = min(df_ecdc$date, na.rm = TRUE),
+        #   max = Sys.Date(),
+        #   start = min(df_ecdc$date, na.rm = TRUE),
+        #   end = Sys.Date(),
+        #   width = "100%"
+        # )
       )
       # col_4(
       #   selectInput(
@@ -213,7 +227,8 @@ mod_map_server <- function(input, output, session) {
       hc_xAxis(
         title = list(text = ""),
         min = datetime_to_timestamp(as.Date(time_period[1])),
-        max = datetime_to_timestamp(as.Date(time_period[2]))
+        max = datetime_to_timestamp(as.Date(time_period[2])),
+        crosshair = TRUE
       ) %>%
       hc_yAxis_multiples(
         list(
@@ -250,7 +265,8 @@ mod_map_server <- function(input, output, session) {
         verticalAlign = "top",
         x = -10,
         y = 40
-      )
+      ) %>% 
+      hc_tooltip(shared = TRUE)
     if (region_type == "country") {
       p <- p %>%
         hc_xAxis(
@@ -321,7 +337,8 @@ mod_map_server <- function(input, output, session) {
       hc_chart(zoomType = "x") %>%
       # hc_subtitle(text = "click + drag horizontally to zoom") %>%
       hc_xAxis(
-        title = list(text = xlab)
+        title = list(text = xlab),
+        crosshair = TRUE
         # min = datetime_to_timestamp(as.Date(input$time_period[1])),
         # max = datetime_to_timestamp(as.Date(input$time_period[2]))
       ) %>%
@@ -357,7 +374,8 @@ mod_map_server <- function(input, output, session) {
         # title = list(text = "Top 9 + other"),
         layout = "proximate",
         align = "right"
-      )
+      ) %>% 
+      hc_tooltip(shared = TRUE)
 
     if (region_type == "country") {
       p <- p %>%
@@ -527,6 +545,7 @@ mod_map_server <- function(input, output, session) {
     w_totals$show()
     df <- df_data() %>%
       filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
+      dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
 
     w_totals$hide()
