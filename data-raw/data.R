@@ -30,9 +30,26 @@ if (is_server) {
   file.remove(list.files(file.path("/srv/shiny-server/covid19", ".rcache"), full.names = TRUE))
   # launch new session of app for new connections
   system("touch restart.txt")
-
   # also save trends data into linelist dashboard package
   save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
+  
+  # make static map =============================================
+  library(leaflet)
+  df_trends <- get_trends_data_new(df_jhcsse)
+  leafmap <- make_map(df_trends, sf_world)
+  #local output folder
+  local_output <- "/home/epicentre/static_reports/covid_map"
+  fname <- fs::path(local_output, "index", ext = "html")
+  htmlwidgets::saveWidget(
+    leafmap, 
+    file = fname, 
+    libdir = fs::path(local_output, "libs"),
+    title = paste("Epicentre COVID-19 Case Trends"),
+    background = "#FFFAFA",
+    selfcontained = TRUE
+  )
+  # copy to nginx folder to be served by webserver
+  file.copy(fname, "/usr/share/nginx/html/covid-map/")
 } else {
   file.remove(list.files(here::here(".rcache"), full.names = TRUE))
 }

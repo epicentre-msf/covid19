@@ -38,7 +38,7 @@ calc_radius <- function(n, scale_factor = 30) {
 
 addCircleLegend <- function(
   map, title = "", range, scaling_fun, ...,
-  color, weight, fillColor, fillOpacity,
+  color, weight, fillColor, fillOpacity, label_accuracy = 0.1,
   position = c("topright", "bottomright", "bottomleft", "topleft"),
   data = leaflet::getMapData(map), layerId = NULL, group = NULL) {
   
@@ -49,7 +49,7 @@ addCircleLegend <- function(
   max_n <- round(max(range, na.rm = TRUE), 0)
   n_range <- c(min_n, med_n, max_n)
   radii <- scaling_fun(n_range, ...)
-  n_range <- scales::label_number_si(accuracy = 0.1)(n_range)
+  n_range <- scales::label_number_si(accuracy = label_accuracy)(n_range)
   
   circle_style <- glue::glue(
     "border-radius:50%;
