@@ -36,7 +36,8 @@ if (is_server) {
   # make static map =============================================
   library(leaflet)
   df_trends <- get_trends_data_new(df_jhcsse)
-  leafmap <- make_map(df_trends, sf_world)
+  latest_date <- max(df_jhcsse$date, na.rm = TRUE)
+  leafmap <- make_map(df_trends, sf_world, latest_date)
   #local output folder
   local_output <- "/home/epicentre/static_reports/covid_map"
   fname <- fs::path(local_output, "index", ext = "html")
@@ -49,7 +50,7 @@ if (is_server) {
     selfcontained = TRUE
   )
   # copy to nginx folder to be served by webserver
-  file.copy(fname, "/usr/share/nginx/html/covid-map/")
+  file.copy(fname, "/usr/share/nginx/html/covid-map/", overwrite = TRUE)
 } else {
   file.remove(list.files(here::here(".rcache"), full.names = TRUE))
 }
