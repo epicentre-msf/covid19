@@ -34,6 +34,7 @@ if (is_server) {
   save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
   
   # make static map =============================================
+  Sys.setenv(RSTUDIO_PANDOC="/usr/lib/rstudio-server/bin/pandoc")
   library(leaflet)
   df_trends <- get_trends_data_new(df_jhcsse)
   latest_date <- max(df_jhcsse$date, na.rm = TRUE)

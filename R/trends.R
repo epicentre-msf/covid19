@@ -3,7 +3,8 @@
 get_trends_data_new <- function(df, time_unit_extent = 14) {
   
   ## params
-  last_date <- max(df$date, na.rm = TRUE)
+  # don't include latest 2 days as likely data is incomplete
+  last_date <- max(df$date, na.rm = TRUE) - 2 
   dates_extent <- c(last_date - (time_unit_extent - 1), last_date)
   
   ## get trends
