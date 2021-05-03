@@ -28,10 +28,11 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
   # )
   
   lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
-  greens <- RColorBrewer::brewer.pal(11, "RdYlGn")[c(7, 9)]
   values <- scico::scico(5, palette = "vikO", begin = .2, end = .8, direction = -1) %>% set_names(lvls)
-  values[4:5] <- greens
+  # greens <- RColorBrewer::brewer.pal(11, "RdYlGn")[c(7, 9)]
+  # values[4:5] <- greens
   pal <- leaflet::colorFactor(palette = values, levels = names(values), ordered = TRUE, na.color = NA)
+  pal_bw <- leaflet::colorFactor(palette = c("#FFFFFF", rep("#808080", 3), "#FFFFFF"), levels = lvls, ordered = TRUE, na.color = NA)
   
   leaflet(sf_df) %>%
     addMapPane(name = "choropleth", zIndex = 410) %>%
@@ -68,8 +69,8 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       stroke = TRUE,
       color = "white",
       weight = 1,
-      fillColor = ~ pal(trend_cases),
-      fillOpacity = .6,
+      fillColor = ~pal(trend_cases),
+      fillOpacity = 0.6,
       label = tooltip,
       highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .7, weight = 2),
       group = "Trends",
@@ -87,10 +88,13 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       lng = ~lon,
       lat = ~lat,
       radius = ~calc_radius(cases),
-      fillColor = "#57AACB",
-      fillOpacity = 0.6,
+      fill = FALSE,
+      # fillColor = ~ pal(trend_cases),
+      # fillColor = "#57AACB",
+      # fillOpacity = 0.6,
       weight = 1,
-      color = "#FFFFFF",
+      color = ~pal_bw(trend_cases),
+      # color = "#808080",
       opacity = 1,
       label = tooltip,
       group = "Cases",
@@ -101,10 +105,10 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       range = sf_df$cases,
       scaling_fun = calc_radius,
       label_accuracy = 1,
-      fillColor = "#57AACB",
+      fillColor = "#FFFFFF",
       fillOpacity = 0.6,
       weight = 1,
-      color = "#FFFFFF",
+      color = "#808080",
       position = "topright",
       layerId = "circle_legend",
       group = "Cases"
