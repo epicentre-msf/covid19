@@ -18,12 +18,15 @@ df_interventions <- get_interventions_data()
 
 df_jhcsse <- get_owid_jhcsse()
 
+# old trends
 df_trends <- get_trends_data(df_jhcsse)
+# new trends
+df_trends_new <- get_trends_data_new(df_jhcsse)
 
 data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
 # save as package data
-usethis::use_data(df_interventions, df_trends, df_jhcsse, data_updated, overwrite = TRUE)
+usethis::use_data(df_interventions, df_trends, df_trends_new, df_jhcsse, data_updated, overwrite = TRUE)
 
 if (is_server) {
   # remove old cache files
@@ -36,9 +39,9 @@ if (is_server) {
   # make static map =============================================
   Sys.setenv(RSTUDIO_PANDOC="/usr/lib/rstudio-server/bin/pandoc")
   library(leaflet)
-  df_trends <- get_trends_data_new(df_jhcsse)
+  # df_trends <- get_trends_data_new(df_jhcsse)
   latest_date <- max(df_jhcsse$date, na.rm = TRUE)
-  leafmap <- make_map(df_trends, sf_world, latest_date)
+  leafmap <- make_map(df_trends_new, sf_world, latest_date)
   #local output folder
   local_output <- "/home/epicentre/static_reports/covid_map"
   fname <- fs::path(local_output, "index", ext = "html")

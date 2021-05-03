@@ -29,6 +29,7 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
   
   lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
   values <- scico::scico(5, palette = "vikO", begin = .2, end = .8, direction = -1) %>% set_names(lvls)
+  # values <- RColorBrewer::brewer.pal(5, "PiYG") %>% set_names(lvls)
   # greens <- RColorBrewer::brewer.pal(11, "RdYlGn")[c(7, 9)]
   # values[4:5] <- greens
   pal <- leaflet::colorFactor(palette = values, levels = names(values), ordered = TRUE, na.color = NA)
@@ -59,12 +60,12 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
     leaflet.extras::addFullscreenControl(position = "topleft") %>%
     leaflet.extras::addResetMapButton() %>%
     addLayersControl(
-      # baseGroups = c("Labels", "No Labels"),
+      # baseGroups = c("Cases", "Deaths"),
       overlayGroups = c("Labels", "Trends", "Cases"),
       position = "topleft",
       options = layersControlOptions(collapsed = FALSE)
     ) %>% 
-    addScaleBar(position = "bottomleft", options = scaleBarOptions(imperial = FALSE)) %>%
+    # addScaleBar(position = "bottomleft", options = scaleBarOptions(imperial = FALSE)) %>%
     addPolygons(
       stroke = TRUE,
       color = "white",
@@ -76,6 +77,17 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       group = "Trends",
       options = pathOptions(pane = "choropleth")
     ) %>%
+    # addPolygons(
+    #   stroke = TRUE,
+    #   color = "white",
+    #   weight = 1,
+    #   fillColor = ~pal(trend_deaths),
+    #   fillOpacity = 0.6,
+    #   label = tooltip,
+    #   highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .7, weight = 2),
+    #   group = "Deaths",
+    #   options = pathOptions(pane = "choropleth")
+    # ) %>%
     addLegend(
       position = "bottomright",
       pal = pal,
@@ -89,12 +101,8 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       lat = ~lat,
       radius = ~calc_radius(cases),
       fill = FALSE,
-      # fillColor = ~ pal(trend_cases),
-      # fillColor = "#57AACB",
-      # fillOpacity = 0.6,
       weight = 1,
       color = ~pal_bw(trend_cases),
-      # color = "#808080",
       opacity = 1,
       label = tooltip,
       group = "Cases",
@@ -112,5 +120,29 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       position = "topright",
       layerId = "circle_legend",
       group = "Cases"
-    )
+    ) 
+    # addCircleMarkers(
+    #   lng = ~lon,
+    #   lat = ~lat,
+    #   radius = ~calc_radius(deaths),
+    #   fill = FALSE,
+    #   weight = 1,
+    #   color = ~pal_bw(trend_deaths),
+    #   opacity = 1,
+    #   label = tooltip,
+    #   group = "Deaths",
+    #   options = pathOptions(pane = "circles")
+    # ) %>%
+    # addCircleLegend(
+    #   title = "Confirmed Deaths",
+    #   range = sf_df$deaths,
+    #   scaling_fun = calc_radius,
+    #   label_accuracy = 1,
+    #   fillColor = "#FFFFFF",
+    #   fillOpacity = 0.6,
+    #   weight = 1,
+    #   color = "#808080",
+    #   position = "topright",
+    #   group = "Deaths"
+    # )
 }

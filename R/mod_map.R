@@ -507,6 +507,7 @@ mod_map_server <- function(input, output, session) {
       dplyr::group_by(country, iso_a3) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
       dplyr::arrange(-cases) %>%
+      # dplyr::left_join(dplyr::select(df_trends_new, iso_a3, trend_cases, trend_deaths), by = "iso_a3") %>% 
       dplyr::inner_join(dplyr::select(sf_world, iso_a3, lon, lat), by = c("iso_a3")) %>%
       sf::st_as_sf()
 
@@ -686,7 +687,7 @@ mod_map_server <- function(input, output, session) {
   # })
 
   observe({
-    df <- df_trends
+    df <- df_trends_new
 
     if (input$region != "Worldwide") {
       if (input$region %in% continents) {
@@ -701,12 +702,13 @@ mod_map_server <- function(input, output, session) {
     sf_df <- sf_world %>% dplyr::inner_join(df, by = "iso_a3")
     sf_df$trend <- sf_df[[paste0("trend_", input$indicator)]]
 
-    RdAmGn <- c("#D95F02", "#E6AB02", "#1B9E77")
-    lvls <- c("Increasing", "Stable", "Declining")
-
-    pal <- leaflet::colorFactor(palette = RdAmGn, levels = lvls)
-
-    # popup_cols <- c("country", "measure", "date_implemented", "comments")
+    # RdAmGn <- c("#D95F02", "#E6AB02", "#1B9E77")
+    # lvls <- c("Increasing", "Stable", "Declining")
+    # pal <- leaflet::colorFactor(palette = RdAmGn, levels = lvls)
+    
+    lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
+    values <- scico::scico(5, palette = "vikO", begin = .2, end = .8, direction = -1) %>% purrr::set_names(lvls)
+    pal <- leaflet::colorFactor(palette = values, levels = names(values), ordered = TRUE, na.color = NA)
 
     leafletProxy("map", session) %>%
       clearGroup("Trends") %>%
@@ -716,30 +718,40 @@ mod_map_server <- function(input, output, session) {
         stroke = TRUE,
         color = "white",
         weight = 1,
-        fillColor = ~ pal(trend),
-        fillOpacity = .4,
-        # label = ~iso_a3,
-        # popup = leafpop::popupTable(dat, zcol = popup_cols, row.numbers = FALSE, feature.id = FALSE),
+        fillColor = ~pal(trend),
+        fillOpacity = .6,
         highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .5),
         group = "Trends",
         options = pathOptions(pane = "choropleth")
       ) %>%
       addLegend(
         position = "bottomright",
-        # pal = pal,
-        # values = ~trend,
-        colors = c(RdAmGn, "#808080"),
-        labels = c(lvls, "NA"),
+        pal = pal,
+        values = factor(names(values), levels = names(values)),
         title = paste(ind_lab, "Trend"),
         layerId = "choro_legend",
         group = "Trends"
       )
+      # addLegend(
+      #   position = "bottomright",
+      #   # pal = pal,
+      #   # values = ~trend,
+      #   colors = c(RdAmGn, "#808080"),
+      #   labels = c(lvls, "NA"),
+      #   title = paste(ind_lab, "Trend"),
+      #   layerId = "choro_legend",
+      #   group = "Trends"
+      # )
   })
 
   observe({
     dat <- map_indicators()
     ind <- dat[[input$indicator]]
     ind_lab <- stringr::str_to_title(input$indicator)
+    trend <- dat[[paste0("trend_", input$indicator)]]
+    
+    # lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
+    # pal_bw <- leaflet::colorFactor(palette = c("#FFFFFF", rep("#808080", 3), "#FFFFFF"), levels = lvls, ordered = TRUE, na.color = NA)
 
     leafletProxy("map", session) %>%
       clearGroup("Cases/Deaths") %>%
@@ -757,14 +769,14 @@ mod_map_server <- function(input, output, session) {
         data = dat,
         lng = ~lon,
         lat = ~lat,
-        radius = ~ calc_radius(ind),
-        fillColor = "#57AACB",
-        fillOpacity = 0.8,
+        radius = ~calc_radius(ind),
         weight = 1,
-        color = "#FFFFFF",
+        color = "#808080",
+        fill = FALSE,
         opacity = 1,
+        # fillColor = "#57AACB",
+        # fillOpacity = 0.8,
         label = ~ glue::glue("<b>{country}</b><br>Cases: {scales::number(cases, accuracy = 1)}<br>Deaths: {scales::number(deaths, accuracy = 1)}") %>% purrr::map(htmltools::HTML),
-        # popup = leafpop::popupTable(dat, zcol = c("country", "cases"), row.numbers = FALSE, feature.id = FALSE),
         layerId = ~ paste0(iso_a3, "_mrkr"),
         group = "Cases/Deaths",
         options = pathOptions(pane = "circles")
@@ -773,10 +785,10 @@ mod_map_server <- function(input, output, session) {
         title = paste("Confirmed", ind_lab),
         range = ind,
         scaling_fun = calc_radius,
-        fillColor = "#57AACB",
-        fillOpacity = 0.8,
+        fillColor = "#FFFFFF",
+        fillOpacity = 0.6,
         weight = 1,
-        color = "#FFFFFF",
+        color = "#808080",
         position = "topright",
         layerId = "circle_legend",
         group = "Cases/Deaths"
