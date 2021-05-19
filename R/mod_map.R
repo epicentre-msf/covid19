@@ -91,19 +91,19 @@ mod_map_ui <- function(id) {
       ),
 
       shinydashboard::box(
-        width = 6, solidHeader = TRUE,
+        width = 10, solidHeader = TRUE,
         leaflet::leafletOutput(ns("map"))
-      ),
-
-      shinydashboard::box(
-        # title = tags$b("Government interventions"),
-        width = 4, solidHeader = TRUE,
-        reactable::reactableOutput(ns("table"))
       )
+
+      # shinydashboard::box(
+      #   # title = tags$b("Government interventions"),
+      #   width = 4, solidHeader = TRUE,
+      #   reactable::reactableOutput(ns("table"))
+      # )
     ),
 
     fluidRow(
-      col_6(
+      col_12(
         shinydashboard::box(
           width = NULL, solidHeader = TRUE,
           title = tagList(
@@ -112,32 +112,32 @@ mod_map_ui <- function(id) {
           ),
           highcharter::highchartOutput(ns("epicurve"))
         )
-      ),
-
-      col_6(
-        shinydashboard::box(
-          width = NULL, solidHeader = TRUE,
-          title = tagList(
-            tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"),
-            tags$div(style = "display: inline-block; padding-right: 10px;"),
-            tags$div(
-              style = "display: inline-block;",
-              shinyWidgets::dropdownButton(
-                size = "xs", label = "params", icon = icon("sliders"), # status = "primary",
-                inline = TRUE, width = "50px", circle = FALSE,
-                # checkboxGroupInput(ns("c_params"), label = "", inline = FALSE,
-                #                    choices = c("log scale" = "log", "set days since" = "days")),
-                checkboxInput(ns("log"), label = "log scale", value = TRUE),
-                checkboxInput(ns("set_days"), label = "xaxis to days since...", value = FALSE),
-                tags$br(),
-                numericInput(ns("n_days"), label = paste("n", "cases"), value = 10, min = 1, step = 10)
-                # uiOutput(ns("n_days_ui"))
-              )
-            )
-          ),
-          highcharter::highchartOutput(ns("cumulative"))
-        )
       )
+
+      # col_6(
+      #   shinydashboard::box(
+      #     width = NULL, solidHeader = TRUE,
+      #     title = tagList(
+      #       tags$div(textOutput(ns("cumulative_title")), style = "display: inline-block; font-weight: bold;"),
+      #       tags$div(style = "display: inline-block; padding-right: 10px;"),
+      #       tags$div(
+      #         style = "display: inline-block;",
+      #         shinyWidgets::dropdownButton(
+      #           size = "xs", label = "params", icon = icon("sliders"), # status = "primary",
+      #           inline = TRUE, width = "50px", circle = FALSE,
+      #           # checkboxGroupInput(ns("c_params"), label = "", inline = FALSE,
+      #           #                    choices = c("log scale" = "log", "set days since" = "days")),
+      #           checkboxInput(ns("log"), label = "log scale", value = TRUE),
+      #           checkboxInput(ns("set_days"), label = "xaxis to days since...", value = FALSE),
+      #           tags$br(),
+      #           numericInput(ns("n_days"), label = paste("n", "cases"), value = 10, min = 1, step = 10)
+      #           # uiOutput(ns("n_days_ui"))
+      #         )
+      #       )
+      #     ),
+      #     highcharter::highchartOutput(ns("cumulative"))
+      #   )
+      # )
     )
   )
 }
@@ -152,49 +152,49 @@ mod_map_ui <- function(id) {
 mod_map_server <- function(input, output, session) {
   ns <- session$ns
 
-  render_table <- function(data, selected_region, region_type) {
-    df <- data %>% tidyr::drop_na(iso, measure)
-    df <- df %>%
-      filter_geo(selected_region, region_type, iso_col = iso) %>%
-      dplyr::select(date_implemented, country, measure, comments)
-
-    rtbl <- reactable::reactable(
-      data = df,
-      height = 400, searchable = FALSE, defaultSorted = "date_implemented",
-      compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump",
-      showSortable = TRUE, filterable = TRUE,
-      columns = list(
-        date_implemented = reactable::colDef(
-          name = "Date implemented",
-          defaultSortOrder = "desc",
-          filterable = FALSE
-        ),
-        country = reactable::colDef(name = "Country"),
-        measure = reactable::colDef(name = "Intervention"),
-        comments = reactable::colDef(show = FALSE)
-      ),
-      # This is >4 secs faster, but shows expand icon in each row
-      details = reactable::colDef(
-        name = "",
-        details = reactable::JS(
-          "function(rowInfo) {
-           if (rowInfo.row['comments'] !== null) {
-             return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
-           }
-           return '<div style = \"padding: 10px\">No further information available</div>';
-         }"
-        ),
-        html = TRUE,
-        width = 60
-      )
-      # details = function(index) {
-      #   comment <- df[index,]$comments
-      #   if(!is.na(comment)) {
-      #     htmltools::div(style = "padding: 10px", comment)
-      #   }
-      # }
-    )
-  }
+  # render_table <- function(data, selected_region, region_type) {
+  #   df <- data %>% tidyr::drop_na(iso, measure)
+  #   df <- df %>%
+  #     filter_geo(selected_region, region_type, iso_col = iso) %>%
+  #     dplyr::select(date_implemented, country, measure, comments)
+  # 
+  #   rtbl <- reactable::reactable(
+  #     data = df,
+  #     height = 400, searchable = FALSE, defaultSorted = "date_implemented",
+  #     compact = TRUE, highlight = TRUE, pagination = TRUE, paginationType = "jump",
+  #     showSortable = TRUE, filterable = TRUE,
+  #     columns = list(
+  #       date_implemented = reactable::colDef(
+  #         name = "Date implemented",
+  #         defaultSortOrder = "desc",
+  #         filterable = FALSE
+  #       ),
+  #       country = reactable::colDef(name = "Country"),
+  #       measure = reactable::colDef(name = "Intervention"),
+  #       comments = reactable::colDef(show = FALSE)
+  #     ),
+  #     # This is >4 secs faster, but shows expand icon in each row
+  #     details = reactable::colDef(
+  #       name = "",
+  #       details = reactable::JS(
+  #         "function(rowInfo) {
+  #          if (rowInfo.row['comments'] !== null) {
+  #            return '<div style = \"padding: 10px\">' + rowInfo.row['comments'] + '</div>'
+  #          }
+  #          return '<div style = \"padding: 10px\">No further information available</div>';
+  #        }"
+  #       ),
+  #       html = TRUE,
+  #       width = 60
+  #     )
+  #     # details = function(index) {
+  #     #   comment <- df[index,]$comments
+  #     #   if(!is.na(comment)) {
+  #     #     htmltools::div(style = "padding: 10px", comment)
+  #     #   }
+  #     # }
+  #   )
+  # }
 
   render_epicurve <- function(data, indicator, time_period, region_type, lockdown_lines) {
     df <- data
@@ -282,125 +282,125 @@ mod_map_server <- function(input, output, session) {
     return(p)
   }
 
-  render_cumulative <- function(data, indicator, time_period, set_days, n_days, log, region_type, lockdown_lines) {
-    df <- data %>%
-      dplyr::group_by(country) %>%
-      dplyr::arrange(date) %>%
-      dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>%
-      dplyr::ungroup()
-
-    ind <- rlang::sym(indicator)
-
-    x_min <- datetime_to_timestamp(as.Date(time_period[1]))
-    y_max <- df %>%
-      dplyr::count(date, wt = {{ ind }}) %>%
-      dplyr::pull(n) %>%
-      max()
-
-
-    if (set_days) {
-      req(n_days)
-      df <- df %>%
-        dplyr::group_by(country) %>%
-        tidyr::drop_na({{ ind }}) %>%
-        dplyr::filter({{ ind }} >= n_days) %>%
-        dplyr::mutate(date = seq_along({{ ind }}) - 1) %>%
-        dplyr::ungroup()
-
-      x_min <- min(df$date, na.rm = TRUE)
-    }
-
-    validate(need(nrow(df) > 0, "No countries meet the criteria..."))
-
-    # title <- paste(region_lab(), "cumulative", input$indicator)
-    xlab <- ifelse(set_days, paste("Days since first", n_days, indicator), "")
-
-    y_lab <- stringr::str_to_title(indicator)
-    if (log) y_lab <- paste(y_lab, "(log scale)")
-    y_type <- ifelse(log, "logarithmic", "linear")
-    y_min <- ifelse(log, 1, 0)
-    y_min <- ifelse(set_days, n_days, y_min)
-
-    mapping <- hcaes(date, !!ind, group = country)
-    data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
-    series <- data_to_series(data, type = "line")
-    opts <- highcharter:::data_to_options(data, "line")
-
-    p <- highchart() %>%
-      hc_add_series_list(series) %>%
-      hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>%
-      hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>%
-      hc_plotOptions(
-        series = list(showInLegend = opts$series_plotOptions_showInLegend),
-        scatter = list(marker = list(symbol = "circle"))
-      ) %>%
-      hc_chart(zoomType = "x") %>%
-      # hc_subtitle(text = "click + drag horizontally to zoom") %>%
-      hc_xAxis(
-        title = list(text = xlab),
-        crosshair = TRUE
-        # min = datetime_to_timestamp(as.Date(input$time_period[1])),
-        # max = datetime_to_timestamp(as.Date(input$time_period[2]))
-      ) %>%
-      hc_yAxis_multiples(
-        list(
-          title = list(text = y_lab),
-          allowDecimals = FALSE,
-          type = y_type,
-          min = y_min
-        ),
-        list(
-          title = list(text = ""),
-          allowDecimals = FALSE,
-          type = y_type,
-          opposite = TRUE,
-          min = y_min,
-          linkedTo = 0
-        )
-      ) %>%
-      hc_plotOptions(
-        line = list(zIndex = 2)
-      ) %>%
-      # hc_annotations(
-      #   list(
-      #     draggable = "",
-      #     labels = list(
-      #       list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0),
-      #            text = "click + drag horizontally to zoom", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
-      #     )
-      #   )
-      # ) %>%
-      hc_legend(
-        # title = list(text = "Top 9 + other"),
-        layout = "proximate",
-        align = "right"
-      ) %>% 
-      hc_tooltip(shared = TRUE)
-
-    if (region_type == "country") {
-      p <- p %>%
-        hc_xAxis(
-          plotLines = purrr::map(rev(lockdown_lines), ~ {
-            df <- .x
-            list(
-              color = "red", zIndex = 1, value = unique(df$x),
-              label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left")
-            )
-          })
-        )
-    }
-    return(p)
-  }
+  # render_cumulative <- function(data, indicator, time_period, set_days, n_days, log, region_type, lockdown_lines) {
+  #   df <- data %>%
+  #     dplyr::group_by(country) %>%
+  #     dplyr::arrange(date) %>%
+  #     dplyr::mutate_at(dplyr::vars(cases, deaths), cumsum) %>%
+  #     dplyr::ungroup()
+  # 
+  #   ind <- rlang::sym(indicator)
+  # 
+  #   x_min <- datetime_to_timestamp(as.Date(time_period[1]))
+  #   y_max <- df %>%
+  #     dplyr::count(date, wt = {{ ind }}) %>%
+  #     dplyr::pull(n) %>%
+  #     max()
+  # 
+  # 
+  #   if (set_days) {
+  #     req(n_days)
+  #     df <- df %>%
+  #       dplyr::group_by(country) %>%
+  #       tidyr::drop_na({{ ind }}) %>%
+  #       dplyr::filter({{ ind }} >= n_days) %>%
+  #       dplyr::mutate(date = seq_along({{ ind }}) - 1) %>%
+  #       dplyr::ungroup()
+  # 
+  #     x_min <- min(df$date, na.rm = TRUE)
+  #   }
+  # 
+  #   validate(need(nrow(df) > 0, "No countries meet the criteria..."))
+  # 
+  #   # title <- paste(region_lab(), "cumulative", input$indicator)
+  #   xlab <- ifelse(set_days, paste("Days since first", n_days, indicator), "")
+  # 
+  #   y_lab <- stringr::str_to_title(indicator)
+  #   if (log) y_lab <- paste(y_lab, "(log scale)")
+  #   y_type <- ifelse(log, "logarithmic", "linear")
+  #   y_min <- ifelse(log, 1, 0)
+  #   y_min <- ifelse(set_days, n_days, y_min)
+  # 
+  #   mapping <- hcaes(date, !!ind, group = country)
+  #   data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
+  #   series <- data_to_series(data, type = "line")
+  #   opts <- highcharter:::data_to_options(data, "line")
+  # 
+  #   p <- highchart() %>%
+  #     hc_add_series_list(series) %>%
+  #     hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>%
+  #     hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>%
+  #     hc_plotOptions(
+  #       series = list(showInLegend = opts$series_plotOptions_showInLegend),
+  #       scatter = list(marker = list(symbol = "circle"))
+  #     ) %>%
+  #     hc_chart(zoomType = "x") %>%
+  #     # hc_subtitle(text = "click + drag horizontally to zoom") %>%
+  #     hc_xAxis(
+  #       title = list(text = xlab),
+  #       crosshair = TRUE
+  #       # min = datetime_to_timestamp(as.Date(input$time_period[1])),
+  #       # max = datetime_to_timestamp(as.Date(input$time_period[2]))
+  #     ) %>%
+  #     hc_yAxis_multiples(
+  #       list(
+  #         title = list(text = y_lab),
+  #         allowDecimals = FALSE,
+  #         type = y_type,
+  #         min = y_min
+  #       ),
+  #       list(
+  #         title = list(text = ""),
+  #         allowDecimals = FALSE,
+  #         type = y_type,
+  #         opposite = TRUE,
+  #         min = y_min,
+  #         linkedTo = 0
+  #       )
+  #     ) %>%
+  #     hc_plotOptions(
+  #       line = list(zIndex = 2)
+  #     ) %>%
+  #     # hc_annotations(
+  #     #   list(
+  #     #     draggable = "",
+  #     #     labels = list(
+  #     #       list(point = list(x = x_min, y = y_max,  xAxis = 0, yAxis = 0),
+  #     #            text = "click + drag horizontally to zoom", style = list(color = "grey"), align = "left", backgroundColor = "transparent", borderWidth = 0)
+  #     #     )
+  #     #   )
+  #     # ) %>%
+  #     hc_legend(
+  #       # title = list(text = "Top 9 + other"),
+  #       layout = "proximate",
+  #       align = "right"
+  #     ) %>% 
+  #     hc_tooltip(shared = TRUE)
+  # 
+  #   if (region_type == "country") {
+  #     p <- p %>%
+  #       hc_xAxis(
+  #         plotLines = purrr::map(rev(lockdown_lines), ~ {
+  #           df <- .x
+  #           list(
+  #             color = "red", zIndex = 1, value = unique(df$x),
+  #             label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left")
+  #           )
+  #         })
+  #       )
+  #   }
+  #   return(p)
+  # }
 
   if (getOption("use.cache", default = TRUE)) {
     cache_storage <- memoise::cache_filesystem(getOption("cache.path", default = "./.rcache"))
-    render_table_active <- memoise::memoise(render_table, cache = cache_storage)
+    # render_table_active <- memoise::memoise(render_table, cache = cache_storage)
     render_epicurve_active <- memoise::memoise(render_epicurve, cache = cache_storage)
-    render_cumulative_active <- memoise::memoise(render_cumulative, cache = cache_storage)
+    # render_cumulative_active <- memoise::memoise(render_cumulative, cache = cache_storage)
   } else {
-    render_table_active <- render_table
+    # render_table_active <- render_table
     render_epicurve_active <- render_epicurve
-    render_cumulative_active <- render_cumulative
+    # render_cumulative_active <- render_cumulative
   }
 
   w_totals <- waiter::Waiter$new(
@@ -595,18 +595,18 @@ mod_map_server <- function(input, output, session) {
   #
   # })
 
-  output$table <- reactable::renderReactable({
-    w_tbl$show()
-
-    selected_region_value <- region_select()
-    region_type_value <- region_type()
-
-    rtbl <- render_table_active(df_interventions, selected_region_value, region_type_value)
-
-    w_tbl$hide()
-    return(rtbl)
-  })
-
+  # output$table <- reactable::renderReactable({
+  #   w_tbl$show()
+  # 
+  #   selected_region_value <- region_select()
+  #   region_type_value <- region_type()
+  # 
+  #   rtbl <- render_table_active(df_interventions, selected_region_value, region_type_value)
+  # 
+  #   w_tbl$hide()
+  #   return(rtbl)
+  # })
+  
   output$map <- renderLeaflet({
     leaflet() %>%
       addMapPane(name = "choropleth", zIndex = 410) %>%
@@ -842,9 +842,9 @@ mod_map_server <- function(input, output, session) {
     paste(region_lab(), type, input$indicator)
   })
 
-  output$cumulative_title <- renderText({
-    paste(region_lab(), "cumulative", input$indicator)
-  })
+  # output$cumulative_title <- renderText({
+  #   paste(region_lab(), "cumulative", input$indicator)
+  # })
 
   lockdown_lines <- reactive({
     lockdowns <- df_interventions %>%
@@ -884,32 +884,32 @@ mod_map_server <- function(input, output, session) {
     w_charts$hide()
   })
 
-  observeEvent(input$indicator, {
-    updateNumericInput(session, "n_days", label = paste("n", input$indicator))
-  })
-
-  observeEvent(input$set_days, {
-    shinyjs::toggleElement(id = "n_days", condition = input$set_days, anim = TRUE)
-  })
-
-  output$cumulative <- renderHighchart({
-    # w$show()
-    data_value <- df_epicurve()
-    indicator_value <- input$indicator
-    time_period_value <- input$time_period
-    set_days_value <- input$set_days
-    n_days_value <- input$n_days
-    log_value <- input$log
-    region_type_value <- region_type()
-    lockdown_lines_value <- lockdown_lines()
-
-    p <- render_cumulative_active(
-      data_value, indicator_value, time_period_value, set_days_value,
-      n_days_value, log_value, region_type_value, lockdown_lines_value
-    )
-
-    return(p)
-
-    w_charts$hide()
-  })
+  # observeEvent(input$indicator, {
+  #   updateNumericInput(session, "n_days", label = paste("n", input$indicator))
+  # })
+  # 
+  # observeEvent(input$set_days, {
+  #   shinyjs::toggleElement(id = "n_days", condition = input$set_days, anim = TRUE)
+  # })
+  # 
+  # output$cumulative <- renderHighchart({
+  #   # w$show()
+  #   data_value <- df_epicurve()
+  #   indicator_value <- input$indicator
+  #   time_period_value <- input$time_period
+  #   set_days_value <- input$set_days
+  #   n_days_value <- input$n_days
+  #   log_value <- input$log
+  #   region_type_value <- region_type()
+  #   lockdown_lines_value <- lockdown_lines()
+  # 
+  #   p <- render_cumulative_active(
+  #     data_value, indicator_value, time_period_value, set_days_value,
+  #     n_days_value, log_value, region_type_value, lockdown_lines_value
+  #   )
+  # 
+  #   return(p)
+  # 
+  #   w_charts$hide()
+  # })
 }

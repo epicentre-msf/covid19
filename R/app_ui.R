@@ -30,8 +30,9 @@ app_ui <- function() {
       )
       
     ),
-    waiter::waiter_show_on_load(html = waiter::spin_3()),
-    waiter::waiter_hide_on_render("map_1-cumulative")
+    waiter::waiter_preloader(html = waiter::spin_3())
+    #waiter::waiter_show_on_load(html = waiter::spin_3()),
+    #waiter::waiter_hide_on_render("map_1-cumulative")
   )
 }
 

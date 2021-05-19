@@ -5,6 +5,7 @@ if (Sys.info()["nodename"] == "vps709766") {
 } else {
   is_server <- FALSE
   setwd(here::here())
+  linelist_dir <- "~/epicentre/covid.linelist.dashboard/data"
 }
 
 library(tidyverse)
@@ -28,13 +29,16 @@ data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 # save as package data
 usethis::use_data(df_interventions, df_trends, df_trends_new, df_jhcsse, data_updated, overwrite = TRUE)
 
+save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
+save(df_trends_new, file = fs::path(linelist_dir, "df_trends_new.rda"))
+
 if (is_server) {
   # remove old cache files
   file.remove(list.files(file.path("/srv/shiny-server/covid19", ".rcache"), full.names = TRUE))
   # launch new session of app for new connections
   system("touch restart.txt")
   # also save trends data into linelist dashboard package
-  save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
+  # save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
   
   # make static map =============================================
   Sys.setenv(RSTUDIO_PANDOC="/usr/lib/rstudio-server/bin/pandoc")
