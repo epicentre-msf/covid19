@@ -1,5 +1,14 @@
 
+
+#' Compute case and deaths trends
+#'
+#' @param df JHSU CSSE data
+#' @param time_unit_extent defaults to 14 days
+#'
+#' @return
 #' @export
+#'
+#' @examples
 get_trends_data_new <- function(df, time_unit_extent = 14) {
   
   ## params
@@ -22,6 +31,8 @@ get_trends_data_new <- function(df, time_unit_extent = 14) {
     dplyr::inner_join(trends_all)
 }
 
+#' @noRd
+#' @keywords internal
 model_trends <- function(x,
                          dates_extent,
                          ma_window = 3,
@@ -29,7 +40,7 @@ model_trends <- function(x,
   
   # filter data to date range of interest
   xsub <- x %>% 
-    filter(between(date, dates_extent[1], dates_extent[2])) %>% 
+    dplyr::filter(dplyr::between(date, dates_extent[1], dates_extent[2])) %>% 
     tidyr::complete(
       date = seq.Date(min(date, na.rm = TRUE), max(date, na.rm = TRUE), by = 1), 
       fill = list(cases = NA_real_, deaths = NA_real_)
@@ -41,6 +52,8 @@ model_trends <- function(x,
   )
 }
 
+#' @noRd
+#' @keywords internal
 get_trend <- function(xsub, var, min_sum, ma_window) {
   if (nrow(xsub) > ma_window & sum(xsub[[var]], na.rm = TRUE) > min_sum) {
     # moving average
@@ -60,7 +73,7 @@ get_trend <- function(xsub, var, min_sum, ma_window) {
       lwr95  = ci95[2,1], 
       upr95  = ci95[2,2]
     ) %>% 
-      mutate(
+      dplyr::mutate(
         trend = case_when(
           lwr95 > 0 ~ "Increasing",
           lwr95 <= 0 & lwr80 > 0 ~ "Likely increasing",
@@ -70,7 +83,7 @@ get_trend <- function(xsub, var, min_sum, ma_window) {
           TRUE ~ NA_character_
         )
       ) %>% 
-      pull(trend)
+      dplyr::pull(trend)
   } else {
     NA_character_
   }
