@@ -1,37 +1,24 @@
 
 make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
-  sf_df <- sf_world %>% select(iso_a3, lon, lat) %>%  dplyr::inner_join(df_trends, by = "iso_a3")
+  sf_df <- sf_world %>% 
+    dplyr::select(iso_a3, lon, lat) %>%  
+    dplyr::inner_join(
+      select(df_trends, country, iso_a3, cases, deaths, trend_cases = trend_cases_14d, trend_deaths = trend_deaths_14d), 
+      by = "iso_a3"
+    )
   
   tooltip <- glue::glue_data(
     sf_df,
     "<b>{country}</b><br>
-  Cases: {scales::number(cases, accuracy = 1)}<br>
-  Cases trend: {trend_cases}<br>
-  Deaths: {scales::number(deaths, accuracy = 1)}<br>
-  Deaths trend: {trend_deaths}<br>"
+  Total cases: {scales::number(cases, accuracy = 1)}<br>
+  Total deaths: {scales::number(deaths, accuracy = 1)}<br>
+  <b>14 day trend</b><br>
+  Cases: {trend_cases}<br>
+  Deaths: {trend_deaths}<br>"
   ) %>% purrr::map(htmltools::HTML)
-  
-  # values <- c(
-  #   "Increasing" = "#e75f00",
-  #   "Likely increasing" = "#fd9e49",
-  #   "Stable" = "#7b848f",
-  #   "Likely decreasing" = "#5fa2ce",
-  #   "Decreasing" = "#1170aa"
-  # )
-  # 
-  # values <- c(
-  #   "Increasing" = "#D7191C",
-  #   "Likely increasing" = "#FDAE61",
-  #   "Stable" = "grey60",
-  #   "Likely decreasing" = "#A6D96A",
-  #   "Decreasing" = "#1A9641"
-  # )
   
   lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
   values <- scico::scico(5, palette = "vikO", begin = .2, end = .8, direction = -1) %>% set_names(lvls)
-  # values <- RColorBrewer::brewer.pal(5, "PiYG") %>% set_names(lvls)
-  # greens <- RColorBrewer::brewer.pal(11, "RdYlGn")[c(7, 9)]
-  # values[4:5] <- greens
   pal <- leaflet::colorFactor(palette = values, levels = names(values), ordered = TRUE, na.color = NA)
   pal_bw <- leaflet::colorFactor(palette = c("#FFFFFF", rep("#808080", 3), "#FFFFFF"), levels = lvls, ordered = TRUE, na.color = NA)
   
@@ -60,12 +47,10 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
     leaflet.extras::addFullscreenControl(position = "topleft") %>%
     leaflet.extras::addResetMapButton() %>%
     addLayersControl(
-      # baseGroups = c("Cases", "Deaths"),
       overlayGroups = c("Labels", "Trends", "Cases"),
       position = "topleft",
       options = layersControlOptions(collapsed = FALSE)
     ) %>% 
-    # addScaleBar(position = "bottomleft", options = scaleBarOptions(imperial = FALSE)) %>%
     addPolygons(
       stroke = TRUE,
       color = "white",
@@ -77,22 +62,11 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       group = "Trends",
       options = pathOptions(pane = "choropleth")
     ) %>%
-    # addPolygons(
-    #   stroke = TRUE,
-    #   color = "white",
-    #   weight = 1,
-    #   fillColor = ~pal(trend_deaths),
-    #   fillOpacity = 0.6,
-    #   label = tooltip,
-    #   highlightOptions = highlightOptions(bringToFront = TRUE, fillOpacity = .7, weight = 2),
-    #   group = "Deaths",
-    #   options = pathOptions(pane = "choropleth")
-    # ) %>%
     addLegend(
       position = "bottomright",
       pal = pal,
       values = factor(names(values), levels = names(values)),
-      title = paste("Cases Trend"),
+      title = paste("14 day Cases Trend"),
       layerId = "choro_legend",
       group = "Trends"
     ) %>% 
@@ -121,28 +95,4 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       layerId = "circle_legend",
       group = "Cases"
     ) 
-    # addCircleMarkers(
-    #   lng = ~lon,
-    #   lat = ~lat,
-    #   radius = ~calc_radius(deaths),
-    #   fill = FALSE,
-    #   weight = 1,
-    #   color = ~pal_bw(trend_deaths),
-    #   opacity = 1,
-    #   label = tooltip,
-    #   group = "Deaths",
-    #   options = pathOptions(pane = "circles")
-    # ) %>%
-    # addCircleLegend(
-    #   title = "Confirmed Deaths",
-    #   range = sf_df$deaths,
-    #   scaling_fun = calc_radius,
-    #   label_accuracy = 1,
-    #   fillColor = "#FFFFFF",
-    #   fillOpacity = 0.6,
-    #   weight = 1,
-    #   color = "#808080",
-    #   position = "topright",
-    #   group = "Deaths"
-    # )
 }

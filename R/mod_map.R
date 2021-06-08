@@ -687,7 +687,7 @@ mod_map_server <- function(input, output, session) {
   # })
 
   observe({
-    df <- df_trends_new
+    df <- df_trends
 
     if (input$region != "Worldwide") {
       if (input$region %in% continents) {
@@ -699,8 +699,8 @@ mod_map_server <- function(input, output, session) {
 
     ind_lab <- stringr::str_to_title(input$indicator)
 
-    sf_df <- sf_world %>% dplyr::inner_join(df, by = "iso_a3")
-    sf_df$trend <- sf_df[[paste0("trend_", input$indicator)]]
+    sf_df <- sf_world %>% dplyr::inner_join(dplyr::select(df, iso_a3, trend_cases_14d, trend_deaths_14d), by = "iso_a3")
+    sf_df$trend <- sf_df[[paste0("trend_", input$indicator, "_14d")]]
 
     # RdAmGn <- c("#D95F02", "#E6AB02", "#1B9E77")
     # lvls <- c("Increasing", "Stable", "Declining")
@@ -728,7 +728,7 @@ mod_map_server <- function(input, output, session) {
         position = "bottomright",
         pal = pal,
         values = factor(names(values), levels = names(values)),
-        title = paste(ind_lab, "Trend"),
+        title = paste("14 day", ind_lab, "Trend"),
         layerId = "choro_legend",
         group = "Trends"
       )
@@ -748,7 +748,7 @@ mod_map_server <- function(input, output, session) {
     dat <- map_indicators()
     ind <- dat[[input$indicator]]
     ind_lab <- stringr::str_to_title(input$indicator)
-    trend <- dat[[paste0("trend_", input$indicator)]]
+    # trend <- dat[[paste0("trend_", input$indicator, "_14d")]]
     
     # lvls <- c("Increasing", "Likely increasing", "Stable", "Likely decreasing", "Decreasing")
     # pal_bw <- leaflet::colorFactor(palette = c("#FFFFFF", rep("#808080", 3), "#FFFFFF"), levels = lvls, ordered = TRUE, na.color = NA)
