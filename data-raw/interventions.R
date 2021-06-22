@@ -1,6 +1,10 @@
 library(jsonlite)
 
 phsm_json <- jsonlite::fromJSON("https://extranet.who.int/xmart-api/odata/NCOV_PHM/CLEAN_PHSM")
+phsm_json <- jsonlite::fromJSON(txt = "https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM")
+phsm_json <- jsonlite::fromJSON("~/Downloads/CLEAN_PHSM.json")
+obj_lines <- readLines(con = "https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM?$", encoding = "UTF-8")
+
 
 tibble::as_tibble(phsm_json$value) %>% 
   janitor::clean_names() %>% 

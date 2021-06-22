@@ -104,14 +104,27 @@ mod_map_ui <- function(id) {
 
     fluidRow(
       col_12(
-        shinydashboard::box(
-          width = NULL, solidHeader = TRUE,
-          title = tagList(
-            tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;") # ,
-            # tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
+        box_w_inputs(
+          width = 12,
+          title = textOutput(ns("epicurve_title")),
+          inputs = tagList(
+            shinyWidgets::radioGroupButtons(
+              inputId = ns("chart_type"),
+              label = NULL,
+              choices = c(`<i class='fa fa-bar-chart'></i>` = "column", `<i class='fa fa-line-chart'></i>` = "line"),
+              size = "sm"
+            )
           ),
           highcharter::highchartOutput(ns("epicurve"))
         )
+        # shinydashboard::box(
+        #   width = NULL, solidHeader = TRUE,
+        #   title = tagList(
+        #     tags$div(textOutput(ns("epicurve_title")), style = "display: inline-block; font-weight: bold;") # ,
+        #     # tags$div(tags$small("click + drag horizontally to zoom"), style = "display: inline-block;")
+        #   ),
+        #   highcharter::highchartOutput(ns("epicurve"))
+        # )
       )
 
       # col_6(
@@ -196,7 +209,7 @@ mod_map_server <- function(input, output, session) {
   #   )
   # }
 
-  render_epicurve <- function(data, indicator, time_period, region_type, lockdown_lines) {
+  render_epicurve <- function(data, indicator, time_period, region_type, chart_type) {
     df <- data
     ind <- rlang::sym(indicator)
 
@@ -210,8 +223,8 @@ mod_map_server <- function(input, output, session) {
 
     mapping <- hcaes(date, !!ind, group = country)
     data <- mutate_mapping(df, mapping) %>% factor_to_char(as.character(mapping$group))
-    series <- data_to_series(data, type = "column")
-    opts <- highcharter:::data_to_options(data, "column")
+    series <- data_to_series(data, type = chart_type)
+    opts <- highcharter:::data_to_options(data, chart_type)
 
     p <- highchart() %>%
       hc_add_series_list(series) %>%
@@ -258,27 +271,35 @@ mod_map_server <- function(input, output, session) {
           )
         )
       ) %>%
-      hc_legend(
-        # title = list(text = "Top 9 + other"),
-        layout = "vertical",
-        align = "right",
-        verticalAlign = "top",
-        x = -10,
-        y = 40
-      ) %>% 
       hc_tooltip(shared = TRUE)
-    if (region_type == "country") {
-      p <- p %>%
-        hc_xAxis(
-          plotLines = purrr::map(rev(lockdown_lines), ~ {
-            df <- .x
-            list(
-              color = "red", zIndex = 1, value = unique(df$x),
-              label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left")
-            )
-          })
+    
+    if (chart_type == "column") {
+      p <- p %>% 
+        hc_legend(
+          # title = list(text = "Top 9 + other"),
+          layout = "vertical",
+          align = "right",
+          verticalAlign = "top",
+          x = -10,
+          y = 40
         )
+    } else if (chart_type == "line") {
+      p <- p %>% 
+        hc_legend(layout = "proximate", align = "right")
     }
+    
+    # if (region_type == "country") {
+    #   p <- p %>%
+    #     hc_xAxis(
+    #       plotLines = purrr::map(rev(lockdown_lines), ~ {
+    #         df <- .x
+    #         list(
+    #           color = "red", zIndex = 1, value = unique(df$x),
+    #           label = list(text = unique(df$measure), verticalAlign = "top", textAlign = "left")
+    #         )
+    #       })
+    #     )
+    # }
     return(p)
   }
 
@@ -846,29 +867,29 @@ mod_map_server <- function(input, output, session) {
   #   paste(region_lab(), "cumulative", input$indicator)
   # })
 
-  lockdown_lines <- reactive({
-    lockdowns <- df_interventions %>%
-      dplyr::filter(
-        iso == region_select(),
-        measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
-      ) %>%
-      dplyr::group_by(measure) %>%
-      dplyr::filter(date_implemented == min(date_implemented, na.rm = TRUE)) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(x = datetime_to_timestamp(date_implemented)) %>%
-      dplyr::select(x, measure) %>%
-      dplyr::distinct() %>%
-      dplyr::group_by(x) %>%
-      dplyr::arrange(x) %>%
-      dplyr::filter(dplyr::row_number() == 1) %>%
-      dplyr::ungroup()
-
-    # if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
-    #   lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
-    # }
-
-    lockdowns %>% dplyr::group_split(x, measure)
-  })
+  # lockdown_lines <- reactive({
+  #   lockdowns <- df_interventions %>%
+  #     dplyr::filter(
+  #       iso == region_select(),
+  #       measure %in% c("Full lockdown", "Partial lockdown", "State of emergency declared")
+  #     ) %>%
+  #     dplyr::group_by(measure) %>%
+  #     dplyr::filter(date_implemented == min(date_implemented, na.rm = TRUE)) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::mutate(x = datetime_to_timestamp(date_implemented)) %>%
+  #     dplyr::select(x, measure) %>%
+  #     dplyr::distinct() %>%
+  #     dplyr::group_by(x) %>%
+  #     dplyr::arrange(x) %>%
+  #     dplyr::filter(dplyr::row_number() == 1) %>%
+  #     dplyr::ungroup()
+  # 
+  #   # if ("Full lockdown" %in% lockdowns$measure & "Partial lockdown" %in% lockdowns$measure) {
+  #   #   lockdowns <- lockdowns %>% dplyr::filter(measure != "Partial lockdown")
+  #   # }
+  # 
+  #   lockdowns %>% dplyr::group_split(x, measure)
+  # })
 
   output$epicurve <- renderHighchart({
     # w$show()
@@ -876,13 +897,49 @@ mod_map_server <- function(input, output, session) {
     indicator_value <- input$indicator
     time_period_value <- input$time_period
     region_type_value <- region_type()
-    lockdown_lines_value <- lockdown_lines()
-    p <- render_epicurve_active(data_value, indicator_value, time_period_value, region_type_value, lockdown_lines_value)
+    # lockdown_lines_value <- lockdown_lines()
+    chart_type <- input$chart_type
+    p <- render_epicurve_active(data_value, indicator_value, time_period_value, region_type_value, chart_type)
 
     return(p)
 
     w_charts$hide()
   })
+  
+  observe({
+    if (input$chart_type == "bar") {
+      highcharter::highchartProxy(ns("epicurve")) %>%
+        highcharter::hcpxy_set_data(
+          type = "column",
+          data = df_epicurve(),
+          mapping = hcaes(date, !!rlang::sym(input$indicator), group = country),
+          redraw = TRUE
+        ) %>% 
+        highcharter::hcpxy_update(
+          # chart = list(type = "column"),
+          legend = list(
+            layout = "vertical",
+            align = "right",
+            verticalAlign = "top",
+            x = -10,
+            y = 40
+          )
+        )
+    } else if (input$chart_type == "line") {
+      highcharter::highchartProxy(ns("epicurve")) %>%
+        highcharter::hcpxy_set_data(
+          type = "line",
+          data = df_epicurve(),
+          mapping = hcaes(date, !!rlang::sym(input$indicator), group = country),
+          redraw = TRUE
+        ) %>% 
+        highcharter::hcpxy_update(
+          # chart = list(type = "line"),
+          legend = list(layout = "proximate", align = "right")
+        )
+        
+    }
+  }) %>% bindEvent(NULL, ignoreInit = TRUE)
 
   # observeEvent(input$indicator, {
   #   updateNumericInput(session, "n_days", label = paste("n", input$indicator))
