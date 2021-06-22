@@ -18,3 +18,10 @@ sf_world <- world_map_raw %>%
   rename(lon = X, lat = Y)
 
 usethis::use_data(sf_world, overwrite = TRUE)
+
+geo_ref <- countrycode::codelist_panel %>% 
+  dplyr::select(iso3c, continent, region, country = country.name.en) %>% 
+  dplyr::distinct() %>% 
+  tibble::as_tibble()
+
+usethis::use_data(geo_ref, overwrite = TRUE)
