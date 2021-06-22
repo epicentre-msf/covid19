@@ -17,6 +17,7 @@ Imports:
     waiter,
     leaflet,
     dplyr,
+    magrittr,
     tidyr,
     readxl,
     readr,

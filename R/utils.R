@@ -1,3 +1,10 @@
+#' @importFrom magrittr %>%
+#' @export
+magrittr::`%>%`
+
+#' @importFrom magrittr %<>%
+#' @export
+magrittr::`%<>%`
 
 valueBoxSpark <- function(value, title, sparkobj = NULL, subtitle = NULL, icon = NULL, color = "aqua", width = 4, href = NULL){
   
