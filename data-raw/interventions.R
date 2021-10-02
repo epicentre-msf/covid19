@@ -1,6 +1,14 @@
+
+library(tidyverse)
 library(jsonlite)
 
 phsm_json <- jsonlite::fromJSON("https://extranet.who.int/xmart-api/odata/NCOV_PHM/CLEAN_PHSM")
+phsm_json <- jsonlite::fromJSON("https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM")
+df_phsm_raw <- readr::read_csv("https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM?$format=csv")
+
+count(df_phsm_raw, COUNTRY_TERRITORY_AREA, sort = TRUE)
+
+write_excel_csv(df_phsm_raw, "~/Downloads/covid_phsm.csv")
 
 tibble::as_tibble(phsm_json$value) %>% 
   janitor::clean_names() %>% 
