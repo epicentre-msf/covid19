@@ -11,9 +11,6 @@ get_trends_data_new(df, time_unit_extent = 14)
 
 \item{time_unit_extent}{defaults to 14 days}
 }
-\value{
-
-}
 \description{
 Compute case and deaths trends
 }

@@ -23,34 +23,91 @@ mod_map_ui <- function(id) {
   region_selects <- c("Worldwide", split(region_selects$region, region_selects$continent))
 
   tagList(
+
+    # fluidRow(
+    #   col_3(
+    #     selectInput(
+    #       ns("region"),
+    #       "Region focus",
+    #       choices = region_selects,
+    #       width = "100%"
+    #     )
+    #   ),
+    #   col_3(
+    #     shinyWidgets::radioGroupButtons(
+    #       inputId = ns("source"),
+    #       label = "Data source",
+    #       choices = c("JHU CSSE (daily)" = "JHU CSSE", "ECDC (weekly)" = "ECDC"), # "WHO",
+    #       justified = TRUE,
+    #       size = "sm"
+    #     )
+    #   ),
+    #   col_3(
+    #     shinyWidgets::radioGroupButtons(
+    #       inputId = ns("indicator"),
+    #       label = "Indicator",
+    #       choices = c("Cases" = "cases", "Deaths" = "deaths"),
+    #       justified = TRUE,
+    #       size = "sm"
+    #     )
+    #   ),
+    #   col_3(
+    #     dateRangeInput(
+    #       ns("time_period"),
+    #       label = "Time period",
+    #       min = min(df_jhcsse$date, na.rm = TRUE),
+    #       max = max(df_jhcsse$date, na.rm = TRUE),
+    #       start = min(df_jhcsse$date, na.rm = TRUE),
+    #       end = max(df_jhcsse$date, na.rm = TRUE),
+    #       # value = c(
+    #       #   min(df_jhcsse$date, na.rm = TRUE),
+    #       #   max(df_jhcsse$date, na.rm = TRUE)
+    #       # ),
+    #       # step = 1,
+    #       width = "100%"
+    #     )
+    #     # dateRangeInput(
+    #     #   ns("time_period"),
+    #     #   label = "Time period",
+    #     #   min = min(df_ecdc$date, na.rm = TRUE),
+    #     #   max = Sys.Date(),
+    #     #   start = min(df_ecdc$date, na.rm = TRUE),
+    #     #   end = Sys.Date(),
+    #     #   width = "100%"
+    #     # )
+    #   )
+    #   # col_4(
+    #   #   selectInput(
+    #   #     ns("intervention"),
+    #   #     "Interventions",
+    #   #     choices = c("Highlight government interventions" = "", sort(unique(df_interventions$measure))),
+    #   #     width = "100%"
+    #   #   )
+    #   # )
+    # ),
+
     fluidRow(
-      col_3(
+      col_2(
         selectInput(
           ns("region"),
           "Region focus",
           choices = region_selects,
           width = "100%"
-        )
-      ),
-      col_3(
+        ),
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"),
           label = "Data source",
           choices = c("JHU CSSE (daily)" = "JHU CSSE", "ECDC (weekly)" = "ECDC"), # "WHO",
           justified = TRUE,
           size = "sm"
-        )
-      ),
-      col_3(
+        ),
         shinyWidgets::radioGroupButtons(
           inputId = ns("indicator"),
           label = "Indicator",
           choices = c("Cases" = "cases", "Deaths" = "deaths"),
           justified = TRUE,
           size = "sm"
-        )
-      ),
-      col_3(
+        ),
         dateRangeInput(
           ns("time_period"),
           label = "Time period",
@@ -58,40 +115,16 @@ mod_map_ui <- function(id) {
           max = max(df_jhcsse$date, na.rm = TRUE),
           start = min(df_jhcsse$date, na.rm = TRUE),
           end = max(df_jhcsse$date, na.rm = TRUE),
-          # value = c(
-          #   min(df_jhcsse$date, na.rm = TRUE),
-          #   max(df_jhcsse$date, na.rm = TRUE)
-          # ),
-          # step = 1,
           width = "100%"
         )
-        # dateRangeInput(
-        #   ns("time_period"),
-        #   label = "Time period",
-        #   min = min(df_ecdc$date, na.rm = TRUE),
-        #   max = Sys.Date(),
-        #   start = min(df_ecdc$date, na.rm = TRUE),
-        #   end = Sys.Date(),
-        #   width = "100%"
-        # )
-      )
-      # col_4(
-      #   selectInput(
-      #     ns("intervention"),
-      #     "Interventions",
-      #     choices = c("Highlight government interventions" = "", sort(unique(df_interventions$measure))),
-      #     width = "100%"
-      #   )
-      # )
-    ),
+      ),
 
-    fluidRow(
-      col_2(
+      col_4(
         uiOutput(ns("totals"))
       ),
 
       shinydashboard::box(
-        width = 10, solidHeader = TRUE,
+        width = 6, solidHeader = TRUE,
         leaflet::leafletOutput(ns("map"))
       )
 
@@ -243,6 +276,8 @@ mod_map_server <- function(input, output, session) {
         max = datetime_to_timestamp(as.Date(time_period[2])),
         crosshair = TRUE
       ) %>%
+      highcharter::hc_rangeSelector(enabled = TRUE, selected = 4) %>%
+      highcharter::hc_navigator(enabled = TRUE) %>%
       hc_yAxis_multiples(
         list(
           title = list(text = y_lab),
@@ -257,7 +292,7 @@ mod_map_server <- function(input, output, session) {
         )
       ) %>%
       hc_plotOptions(
-        line = list(zIndex = 1, dashStyle = "ShortDash"),
+        line = list(zIndex = 1, marker = list(enabled = FALSE), label = list(enabled = TRUE)),
         column = list(zIndex = 2, stacking = "normal", groupPadding = 0.05, pointPadding = 0.05, borderWidth = 0.05)
       ) %>%
       hc_annotations(
@@ -553,80 +588,80 @@ mod_map_server <- function(input, output, session) {
     return(df)
   })
 
-  # df_gi <- reactive({
-  #
-  #   df <- df_interventions
-  #   if (input$intervention != "") df <- df %>% dplyr::filter(measure == input$intervention)
-  #   return(df)
-  #
-  # })
-
   # Outputs ========================================================
 
-  output$totals <- renderUI({
-    w_totals$show()
-    df <- df_data() %>%
-      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
-      dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>%
-      dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
-
-    w_totals$hide()
-
-    div(
-      class = "text-center",
-      h2(region_select(), style = "font-weight: bold;"),
-      shinydashboard::valueBox(countup::countup(df$cases), "Confirmed Cases", width = 12, color = "blue"),
-      shinydashboard::valueBox(countup::countup(df$deaths), "Confirmed Deaths", width = 12, color = "red")
-    )
-  })
-
   # output$totals <- renderUI({
-  #
-  #   df_ts <- df_data() %>%
+  #   w_totals$show()
+  #   df <- df_data() %>%
   #     filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
-  #     dplyr::filter(
-  #       date >= input$time_period[1],
-  #       date <= input$time_period[2]
-  #     ) %>%
-  #     dplyr::group_by(date) %>%
-  #     dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
-  #     dplyr::ungroup()
-  #
-  #   hc_cases <- hchart(df_ts, "column", hcaes(date, cases), name = "Daily cases")  %>%
-  #     hc_elementId(id = "hc-cases-mini") %>%
-  #     #hc_chart(className = "hc-hide") %>%
-  #     #hc_size(height = 100) %>%
-  #     hc_credits(enabled = FALSE) %>%
-  #     hc_add_theme(hc_theme_sparkline_vb())
-  #
-  #   hc_deaths <- hchart(df_ts, "column", hcaes(date, deaths), name = "Daily deaths")  %>%
-  #     hc_elementId(id = "hc-deaths-mini") %>%
-  #     #hc_chart(className = "hc-hide") %>%
-  #     #hc_size(height = 100) %>%
-  #     hc_credits(enabled = FALSE) %>%
-  #     hc_add_theme(hc_theme_sparkline_vb())
-  #
-  #   df_total <- df_ts %>% dplyr::summarise(cases = sum(cases), deaths = sum(deaths))
-  #
+  #     dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>%
+  #     dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE))
+
+  #   w_totals$hide()
+
   #   div(
-  #     div(class = "text-center", h2(region_select(), style = "font-weight: bold;")),
-  #     valueBoxSpark(value = countup::countup(df_total$cases), title = "Confirmed Cases", sparkobj = hc_cases, width = 12, color = "blue"),
-  #     valueBoxSpark(value = countup::countup(df_total$deaths), title = "Confirmed Deaths", sparkobj = hc_deaths, width = 12, color = "red")
+  #     class = "text-center",
+  #     h2(region_select(), style = "font-weight: bold;"),
+  #     shinydashboard::valueBox(countup::countup(df$cases), "Confirmed Cases", width = 12, color = "blue"),
+  #     shinydashboard::valueBox(countup::countup(df$deaths), "Confirmed Deaths", width = 12, color = "red")
   #   )
-  #
   # })
 
-  # output$table <- reactable::renderReactable({
-  #   w_tbl$show()
-  # 
-  #   selected_region_value <- region_select()
-  #   region_type_value <- region_type()
-  # 
-  #   rtbl <- render_table_active(df_interventions, selected_region_value, region_type_value)
-  # 
-  #   w_tbl$hide()
-  #   return(rtbl)
-  # })
+  output$totals <- renderUI({
+  
+    df_ts <- df_data() %>%
+      filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
+      dplyr::filter(
+        date >= input$time_period[1],
+        date <= input$time_period[2]
+      ) %>%
+      dplyr::group_by(date) %>%
+        dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
+        dplyr::ungroup() %>%
+        dplyr::arrange(date) %>%
+        dplyr::mutate(
+          cases_7d = zoo::rollmean(cases, k = 7, fill = NA),
+          deaths_7d = zoo::rollmean(deaths, k = 7, fill = NA)
+        )
+  
+    hc_cases <- hchart(df_ts, "spline", hcaes(date, cases_7d), name = "7 day av.") %>%
+      hc_size(height = 150) %>%
+      hc_credits(enabled = FALSE) %>%
+      hc_add_theme(hc_theme_sparkline_vb())
+
+    hc_deaths <- hchart(df_ts, "spline", hcaes(date, deaths_7d), name = "7 day av.") %>%
+      hc_size(height = 150) %>%
+      hc_credits(enabled = FALSE) %>%
+      hc_add_theme(hc_theme_sparkline_vb())
+  
+    #hc_deaths <- hchart(df_ts, "column", hcaes(date, deaths), name = "Daily deaths")  %>%
+      #hc_elementId(id = "hc-deaths-mini") %>%
+      #hc_chart(className = "hc-hide") %>%
+      #hc_size(height = 100) 
+  
+    df_total <- df_ts %>% dplyr::summarise(cases = sum(cases), deaths = sum(deaths))
+  
+    tagList(
+      col_12(class = "text-center", h2(region_select(), style = "font-weight: bold;")),
+      valueBoxSpark(
+        value = countup::countup(df_total$cases), 
+        title = "Confirmed Cases", 
+        sparkobj = hc_cases, 
+        width = 6, 
+        color = "blue",
+        info = "line shows 7 day rolling avergae"
+      ),
+      valueBoxSpark(
+        value = countup::countup(df_total$deaths), 
+        title = "Confirmed Deaths", 
+        sparkobj = hc_deaths, 
+        width = 6, 
+        color = "red",
+        info = "line shows 7 day rolling avergae"
+      )
+    )
+  
+  })
   
   output$map <- renderLeaflet({
     leaflet() %>%
@@ -892,18 +927,14 @@ mod_map_server <- function(input, output, session) {
   # })
 
   output$epicurve <- renderHighchart({
-    # w$show()
+    on.exit(w_charts$hide())
     data_value <- df_epicurve()
     indicator_value <- input$indicator
     time_period_value <- input$time_period
     region_type_value <- region_type()
     # lockdown_lines_value <- lockdown_lines()
     chart_type <- input$chart_type
-    p <- render_epicurve_active(data_value, indicator_value, time_period_value, region_type_value, chart_type)
-
-    return(p)
-
-    w_charts$hide()
+    render_epicurve_active(data_value, indicator_value, time_period_value, region_type_value, chart_type)
   })
   
   observe({

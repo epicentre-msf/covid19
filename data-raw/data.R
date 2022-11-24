@@ -21,10 +21,15 @@ library(covidutils)
 df_jhcsse <- get_owid_jhcsse()
 df_trends <- get_country_summaries(df_jhcsse)
 
+source(here::here("R", "get_data.R"))
+df_phsm <- get_phsm_data()
+# glimpse(df_phsm)
+# usethis::use_data(df_phsm, overwrite = TRUE)
+
 data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
 # save as package data
-usethis::use_data(df_jhcsse, df_trends, data_updated, overwrite = TRUE)
+usethis::use_data(df_jhcsse, df_trends, df_phsm, data_updated, overwrite = TRUE)
 
 save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
 

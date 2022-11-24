@@ -13,10 +13,12 @@ app_ui <- function() {
       
       # tabs 
       tabPanel(title = icon("globe-africa"), mod_map_ui("map_1")), #"Global overview", 
+
+      tabPanel(title = "PHSM", icon = icon("table"), mod_phsm_ui("phsm")),
       
       tabPanel(
-        #title = "About",
-        title = icon("info"), 
+        title = "About",
+        icon = icon("info"), 
         fluidRow(
           column(
             width = 8, offset = 2,
