@@ -97,7 +97,7 @@ mod_map_ui <- function(id) {
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"),
           label = "Data source",
-          choices = c("JHU CSSE (daily)" = "JHU CSSE", "ECDC (weekly)" = "ECDC"), # "WHO",
+          choices = c("JHU CSSE" = "JHU CSSE", "ECDC" = "ECDC"), # "WHO",
           justified = TRUE,
           size = "sm"
         ),
@@ -584,7 +584,7 @@ mod_map_server <- function(input, output, session) {
       dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>%
       tidyr::drop_na(country, {{ ind }}) %>%
       dplyr::mutate(
-        date = lubridate::as_date(date),
+        date = lubridate::floor_date(date, "week", week_start = 1),
         country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ ind }})
       ) %>%
       dplyr::group_by(date, country) %>%
