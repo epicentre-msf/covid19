@@ -306,7 +306,10 @@ mod_map_server <- function(input, output, session) {
           )
         )
       ) %>%
-      hc_tooltip(shared = TRUE)
+      hc_tooltip(shared = TRUE) %>% 
+      hc_title(text = NULL) %>% 
+      hc_exporting(enabled = FALSE) %>% 
+      hc_credits(enabled = FALSE) 
     
     if (chart_type == "column") {
       p <- p %>% 
