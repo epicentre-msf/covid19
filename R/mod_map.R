@@ -583,7 +583,10 @@ mod_map_server <- function(input, output, session) {
       filter_geo(r_filter = region_select(), r_type = region_type(), iso_col = iso_a3) %>%
       dplyr::filter(date >= input$time_period[1], date <= input$time_period[2]) %>%
       tidyr::drop_na(country, {{ ind }}) %>%
-      dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ ind }})) %>%
+      dplyr::mutate(
+        date = lubridate::as_date(date),
+        country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ ind }})
+      ) %>%
       dplyr::group_by(date, country) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
       dplyr::ungroup() %>%
@@ -619,6 +622,7 @@ mod_map_server <- function(input, output, session) {
         date >= input$time_period[1],
         date <= input$time_period[2]
       ) %>%
+      dplyr::mutate(date = lubridate::as_date(date)) %>% 
       dplyr::group_by(date) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
       dplyr::ungroup() %>%
