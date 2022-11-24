@@ -626,11 +626,15 @@ mod_map_server <- function(input, output, session) {
   
     hc_cases <- hchart(df_ts, "spline", hcaes(date, cases_7d), name = "7 day av.") %>%
       hc_size(height = 150) %>%
+      hc_title(text = NULL) %>% 
+      hc_exporting(enabled = FALSE) %>% 
       hc_credits(enabled = FALSE) %>%
       hc_add_theme(hc_theme_sparkline_vb())
 
     hc_deaths <- hchart(df_ts, "spline", hcaes(date, deaths_7d), name = "7 day av.") %>%
       hc_size(height = 150) %>%
+      hc_title(text = NULL) %>% 
+      hc_exporting(enabled = FALSE) %>% 
       hc_credits(enabled = FALSE) %>%
       hc_add_theme(hc_theme_sparkline_vb())
   

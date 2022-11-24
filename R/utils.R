@@ -153,6 +153,8 @@ hc_theme_sparkline_vb <- function(...) {
         )
       )
     ),
+    title = list(text = NULL),
+    exporting = list(enabled = FALSE),
     credits = list(
       enabled = FALSE,
       text = ""
