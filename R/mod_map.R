@@ -586,7 +586,8 @@ mod_map_server <- function(input, output, session) {
       dplyr::mutate(country = forcats::fct_lump(country, n = 9, other_level = "Other", w = {{ ind }})) %>%
       dplyr::group_by(date, country) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
-      dplyr::ungroup()
+      dplyr::ungroup() %>%
+      tidyr::drop_na()
 
     return(df)
   })
@@ -619,13 +620,14 @@ mod_map_server <- function(input, output, session) {
         date <= input$time_period[2]
       ) %>%
       dplyr::group_by(date) %>%
-        dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
-        dplyr::ungroup() %>%
-        dplyr::arrange(date) %>%
-        dplyr::mutate(
-          cases_7d = zoo::rollmean(cases, k = 7, fill = NA),
-          deaths_7d = zoo::rollmean(deaths, k = 7, fill = NA)
-        )
+      dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
+      dplyr::ungroup() %>%
+      dplyr::arrange(date) %>%
+      dplyr::mutate(
+        cases_7d = zoo::rollmean(cases, k = 7, fill = NA),
+        deaths_7d = zoo::rollmean(deaths, k = 7, fill = NA)
+      ) %>%
+      tidyr::drop_na()
   
     hc_cases <- hchart(df_ts, "spline", hcaes(date, cases_7d), name = "7 day av.") %>%
       hc_size(height = 150) %>%
