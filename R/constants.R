@@ -32,7 +32,7 @@ fntfmly <- '"Roboto Condensed",-apple-system,BlinkMacSystemFont,"Segoe UI",Robot
 options(
   highcharter.chart = hc_opts,
   highcharter.theme =
-    hc_theme_smpl(
+    highcharter::hc_theme_smpl(
       chart = list(
         style = list(
           fontFamily = fntfmly
