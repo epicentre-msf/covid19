@@ -15,7 +15,7 @@ world_regions <- c(
 
 all_continents <- tibble::tibble(continent = continents, region = continents)
 
-country_iso <- dplyr::distinct(countrycode::codelist_panel, country.name.en, iso3c) %>% tidyr::drop_na(iso3c)
+country_iso <- tidyr::drop_na(dplyr::distinct(countrycode::codelist_panel, country.name.en, iso3c), iso3c)
 country_iso <- purrr::set_names(country_iso$iso3c, country_iso$country.name.en)
 
 geo_ref <- countrycode::codelist_panel %>% 
