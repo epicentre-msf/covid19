@@ -622,25 +622,25 @@ mod_map_server <- function(input, output, session) {
         date >= input$time_period[1],
         date <= input$time_period[2]
       ) %>%
-      dplyr::mutate(date = lubridate::as_date(date)) %>% 
+      dplyr::mutate(date = lubridate::floor_date(date, "week", week_start = 1),) %>% 
       dplyr::group_by(date) %>%
       dplyr::summarise(cases = sum(cases, na.rm = TRUE), deaths = sum(deaths, na.rm = TRUE)) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(date) %>%
-      dplyr::mutate(
-        cases_7d = zoo::rollmean(cases, k = 7, fill = NA),
-        deaths_7d = zoo::rollmean(deaths, k = 7, fill = NA)
-      ) %>%
-      tidyr::drop_na()
+      dplyr::ungroup()
+      # dplyr::arrange(date) %>%
+      # dplyr::mutate(
+      #   cases_7d = zoo::rollmean(cases, k = 7, fill = NA),
+      #   deaths_7d = zoo::rollmean(deaths, k = 7, fill = NA)
+      # ) %>%
+      # tidyr::drop_na()
   
-    hc_cases <- hchart(df_ts, "spline", hcaes(date, cases_7d), name = "7 day av.") %>%
+    hc_cases <- hchart(df_ts, "spline", hcaes(date, cases), name = "weekly cases") %>%
       hc_size(height = 150) %>%
       hc_title(text = NULL) %>% 
       hc_exporting(enabled = FALSE) %>% 
       hc_credits(enabled = FALSE) %>%
       hc_add_theme(hc_theme_sparkline_vb())
 
-    hc_deaths <- hchart(df_ts, "spline", hcaes(date, deaths_7d), name = "7 day av.") %>%
+    hc_deaths <- hchart(df_ts, "spline", hcaes(date, deaths), name = "weekly deaths") %>%
       hc_size(height = 150) %>%
       hc_title(text = NULL) %>% 
       hc_exporting(enabled = FALSE) %>% 
@@ -661,16 +661,16 @@ mod_map_server <- function(input, output, session) {
         title = "Confirmed Cases", 
         sparkobj = hc_cases, 
         width = 6, 
-        color = "blue",
-        info = "line shows 7 day rolling avergae"
+        color = "blue"
+        # info = "line shows 7 day rolling avergae"
       ),
       valueBoxSpark(
         value = countup::countup(df_total$deaths), 
         title = "Confirmed Deaths", 
         sparkobj = hc_deaths, 
         width = 6, 
-        color = "red",
-        info = "line shows 7 day rolling avergae"
+        color = "red"
+        # info = "line shows 7 day rolling avergae"
       )
     )
   
@@ -903,12 +903,7 @@ mod_map_server <- function(input, output, session) {
   })
 
   output$epicurve_title <- renderText({
-    type <- switch(
-      input$source,
-      ECDC = "weekly",
-      `JHU CSSE` = "daily"
-    )
-    paste(region_lab(), type, input$indicator)
+    paste(region_lab(), "weekly", input$indicator)
   })
 
   # output$cumulative_title <- renderText({
