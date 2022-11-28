@@ -24,8 +24,9 @@ mod_phsm_ui <- function(id){
         inputId = ns("geo"),
         label = "Country/Territory/Area",
         choices = geo_choices,
+        selected = "FRA",
         options = picker_opts(actions = FALSE),
-        multiple = TRUE,
+        multiple = FALSE,
         width = 200
       ), margin_right = TRUE),
       div_inline(shinyWidgets::pickerInput(
@@ -91,8 +92,8 @@ mod_phsm_server <- function(input, output, session){
 
   df_tbl <- reactive({
     df_tbl <- df_phsm
-    if (input$active) df_tbl %<>% dplyr::filter(is.na(date_end))
     if (length(input$geo)) df_tbl %<>% dplyr::filter(iso %in% input$geo)
+    if (input$active) df_tbl %<>% dplyr::filter(is.na(date_end))
     if (length(input$category)) df_tbl %<>% dplyr::filter(who_category %in% input$category)
 
     df_tbl %>%
