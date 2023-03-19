@@ -1,11 +1,12 @@
 
 make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
-  sf_df <- sf_world %>% 
-    dplyr::select(iso_a3, lon, lat) %>%  
+  sf_df <- sf_world %>%
+    dplyr::select(iso_a3, lon, lat) %>%
     dplyr::inner_join(
-      select(df_trends, country, iso_a3, cases, deaths, trend_cases = trend_cases_14d, trend_deaths = trend_deaths_14d), 
+      select(df_trends, country, iso_a3, cases, deaths, trend_cases = trend_cases_14d, trend_deaths = trend_deaths_14d),
       by = "iso_a3"
-    )
+    ) %>%
+    tidyr::drop_na(cases)
   
   tooltip <- glue::glue_data(
     sf_df,
