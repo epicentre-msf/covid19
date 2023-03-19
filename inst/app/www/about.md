@@ -14,17 +14,11 @@ If you are part of the MSF network, you can access further Epicentre COVID-19 co
 
 ---
 
-#### European Centre for Disease Prevention and Control 
-
-[Data on the geographic distribution of COVID-19 cases worldwide](https://www.ecdc.europa.eu/en/covid-19/data)
-
-#### Center for Systems Science and Engineering (CSSE) at Johns Hopkins University (JHU)
-
-[Data imported from the Our World in Data github repository](https://github.com/owid/covid-19-data/tree/master/public/data/jhu)
-
 #### World Health Organisation
 
-[A global database of public health and social measures applied during the COVID-19 pandemic](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/phsm)
+[Daily cases and deaths by date reported to WHO](https://covid19.who.int/data)
+
+[A global database of public health and social measures applied during the COVID-19 pandemic](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/phsm) (no longer being updated)
 
 #### Shapefiles
 

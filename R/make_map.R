@@ -33,7 +33,7 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       attribution = paste0(
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ', 
         'contributors &copy; <a href="https://carto.com/attributions">CARTO</a> ',  
-        '| JHU CSSE COVID-19 data as of ', latest_date, 
+        '| WHO COVID-19 data as of ', latest_date, 
         ' | Trend analysis and map: <a href="https://reports.msf.net/public/covid19/">Epicentre MSF</a>'
       )
     ) %>%

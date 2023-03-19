@@ -97,7 +97,7 @@ mod_map_ui <- function(id) {
         shinyWidgets::radioGroupButtons(
           inputId = ns("source"),
           label = "Data source",
-          choices = c("JHU CSSE" = "JHU CSSE", "ECDC" = "ECDC"), # "WHO",
+          choices = "WHO", # c("JHU CSSE" = "JHU CSSE", "ECDC" = "ECDC")
           justified = TRUE,
           size = "sm"
         ),
@@ -111,10 +111,10 @@ mod_map_ui <- function(id) {
         dateRangeInput(
           ns("time_period"),
           label = "Time period",
-          min = min(df_jhcsse$date, na.rm = TRUE),
-          max = max(df_jhcsse$date, na.rm = TRUE),
-          start = min(df_jhcsse$date, na.rm = TRUE),
-          end = max(df_jhcsse$date, na.rm = TRUE),
+          min = min(df_who$date, na.rm = TRUE),
+          max = max(df_who$date, na.rm = TRUE),
+          start = min(df_who$date, na.rm = TRUE),
+          end = max(df_who$date, na.rm = TRUE),
           width = "100%"
         )
       ),
@@ -536,9 +536,9 @@ mod_map_server <- function(input, output, session) {
   df_data <- reactive({
     switch(
       input$source,
-      ECDC = df_ecdc,
-      WHO = df_who,
-      `JHU CSSE` = df_jhcsse
+      WHO = df_who
+      # ECDC = df_ecdc,
+      # `JHU CSSE` = df_jhcsse
     )
   })
 
