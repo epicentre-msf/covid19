@@ -5,8 +5,8 @@
 \title{Import JHU data from Our World in Data}
 \usage{
 get_owid_jhcsse(
- 
-    url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/jhu/full_data.csv"
+  url =
+    "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/jhu/full_data.csv"
 )
 }
 \description{

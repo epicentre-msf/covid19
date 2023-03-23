@@ -40,6 +40,7 @@ options(
       ),
       title = list(text = NULL, style = list(fontFamily = fntfmly)),
       subtitle = list(style = list(fontFamily = fntfmly)),
+      exporting = list(enabled = FALSE),
       credits = list(enabled = FALSE, style = list(fontFamily = fntfmly, fontSize = "12px", cursor = "default"), href=""),
       plotOptions = list(line = list(marker = list(enabled = FALSE)))
     )

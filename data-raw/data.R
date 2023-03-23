@@ -10,63 +10,62 @@ if (Sys.info()["nodename"] == "vps709766") {
 
 library(tidyverse)
 library(covidutils)
-pkgload::load_all()
 
-#TODO remove from dashboard as no longer being updated
-# df_interventions <- get_interventions_data()
+get_who_daily <- function(path = "https://covid19.who.int/WHO-COVID-19-global-data.csv") {
+  df_who_raw <- readr::read_csv(path)
+  df_who <- df_who_raw %>%
+    janitor::clean_names() %>%
+    dplyr::transmute(
+      date = date_reported,
+      continent = countrycode::countrycode(country_code, "iso2c", "continent"),
+      country = country,
+      region = countrycode::countrycode(country_code, "iso2c", "region23"),
+      iso_a3 = countrycode::countrycode(country_code, "iso2c", "iso3c"),
+      cases = new_cases,
+      deaths = new_deaths
+    ) %>%
+    dplyr::mutate(
+      across(c(cases, deaths), ~dplyr::if_else(.x < 0, 0, .)),
+      country = stringr::str_remove(country, "\\[1\\]$"),
+      continent = dplyr::case_when(
+        country %in% c("Bonaire", "Saba", "Sint Eustatius") ~ "Americas",
+        country %in% c("Kosovo") ~ "Europe",
+        TRUE ~ continent
+      ),
+      region = dplyr::case_when(
+        country %in% c("Bonaire", "Saba", "Sint Eustatius") ~ "Caribbean",
+        country %in% c("Kosovo") ~ "Southern Europe",
+        TRUE ~ region
+      ),
+      iso_a3 = dplyr::case_when(
+        country %in% c("Bonaire", "Saba", "Sint Eustatius") ~ "BES",
+        country %in% c("Kosovo") ~ "XKX",
+        TRUE ~ iso_a3
+      )
+    )
+    return(df_who)
+}
 
-# not working when run on server
-# running locally and sending to server for now
-# df_ecdc <- get_ecdc_weekly()
+df_who <- get_who_daily()
+df_trends <- get_country_summaries(df_who)
 
-# 
-df_jhcsse <- get_owid_jhcsse()
-df_trends <- get_country_summaries(df_jhcsse)
-
-# old trends
-# df_trends <- get_trends_data(df_jhcsse)
-# new trends
-# df_trends_new <- get_trends_data_new(df_jhcsse)
+# no longer being updated
+# source(here::here("R", "get_data.R"))
+# df_phsm <- get_phsm_data()
+# usethis::use_data(df_phsm, overwrite = TRUE)
 
 data_updated <- format(Sys.time(), "%Y-%m-%d %H:%M %Z")
 
 # save as package data
-usethis::use_data(df_jhcsse, df_trends, data_updated, overwrite = TRUE)
+usethis::use_data(df_who, df_trends, data_updated, overwrite = TRUE)
 
 save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
-# save(df_trends_new, file = fs::path(linelist_dir, "df_trends_new.rda"))
 
 if (is_server) {
   # remove old cache files
   file.remove(list.files(file.path("/srv/shiny-server/covid19", ".rcache"), full.names = TRUE))
   # launch new session of app for new connections
   system("touch restart.txt")
-  # also save trends data into linelist dashboard package
-  # save(df_trends, file = fs::path(linelist_dir, "df_trends.rda"))
-  
-  # make static map =============================================
-  # load(here::here("data", "sf_world.rda"))
-  # source(here::here("R", "make_map.R"))
-  # source(here::here("R", "utils_leaflet.R"))
-  # Sys.setenv(RSTUDIO_PANDOC="/usr/lib/rstudio-server/bin/pandoc")
-  # library(leaflet)
-  # # df_trends <- get_trends_data_new(df_jhcsse)
-  # latest_date <- max(df_jhcsse$date, na.rm = TRUE)
-  # leafmap <- make_map(df_trends, sf_world, latest_date)
-  # leafmap <- make_map(df_trends, sf_world, latest_date)
-  # #local output folder
-  # local_output <- "/home/epicentre/static_reports/covid_map"
-  # fname <- fs::path(local_output, "index", ext = "html")
-  # htmlwidgets::saveWidget(
-  #   leafmap, 
-  #   file = fname, 
-  #   libdir = fs::path(local_output, "libs"),
-  #   title = paste("Epicentre COVID-19 Case Trends"),
-  #   background = "#FFFAFA",
-  #   selfcontained = TRUE
-  # )
-  # # copy to nginx folder to be served by webserver
-  # file.copy(fname, "/usr/share/nginx/html/covid-map/", overwrite = TRUE)
 } else {
   file.remove(list.files(here::here(".rcache"), full.names = TRUE))
 }

@@ -14,4 +14,5 @@ golem::document_and_reload()
 # options(shiny.reactlog = TRUE)
 
 # Run the application
+file.remove(list.files(here::here(".rcache"), full.names = TRUE))
 covid19::run_app(lb = FALSE)

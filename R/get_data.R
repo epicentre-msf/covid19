@@ -1,3 +1,34 @@
+#' Import WHO PHSM dataset
+#'
+#' Public health and social measures
+#'
+#' @export
+get_phsm_data <- function() {
+  base_url <- "https://www.who.int/emergencies/diseases/novel-coronavirus-2019/phsm"
+
+  get_hrefs <- xml2::read_html(base_url) %>%
+    rvest::html_nodes("a") %>%
+    rvest::html_attr("href")
+
+  dl_url <- get_hrefs[stringr::str_detect(get_hrefs, "xlsx")] %>%
+    xml2::url_absolute(base_url) %>%
+    max()
+
+  temp <- tempdir()
+  filename <- "phsm.xlsx"
+  curl::curl_download(dl_url, destfile = fs::path(temp, filename))
+
+  
+
+  readxl::read_excel(fs::path(temp, filename), sheet = "master") %>%
+    mutate(across(contains("date"), lubridate::as_date)) %>%
+    left_join(
+      select(countrycode::codelist, iso = iso3c, flag = unicode.symbol),
+      by = "iso"
+    )
+}
+
+
 #' Import interventions dataset
 #'
 #' @export
@@ -36,7 +67,7 @@ get_interventions_data <- function() {
 #' Import weekly cases and deaths data from ECDC
 #' @export
 get_ecdc_weekly <- function() {
-  url_csv <- "https://opendata.ecdc.europa.eu/covid19/nationalcasedeath/csv"
+  url_csv <- "https://opendata.ecdc.europa.eu/covid19/nationalcasedeath/csv/data.csv"
   safe_csv <- purrr::safely(readr::read_csv)
   df_raw <- safe_csv(url_csv)
 
@@ -45,7 +76,7 @@ get_ecdc_weekly <- function() {
     df_raw <- df_raw$result
   } else {
     message("CSV download failed, trying XLSX")
-    xlsx_url <- "https://opendata.ecdc.europa.eu/covid19/nationalcasedeath/xlsx"
+    xlsx_url <- "https://opendata.ecdc.europa.eu/covid19/nationalcasedeath/xlsx/data.xlsx"
     httr::GET(xlsx_url, httr::write_disk(tf <- tempfile(fileext = ".xlsx")))
     df_raw <- readxl::read_excel(tf)
   }

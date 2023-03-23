@@ -4,7 +4,7 @@ library(tidyverse)
 library(leaflet)
 pkgload::load_all()
 
-latest_date <- max(df_jhcsse$date, na.rm = TRUE)
+latest_date <- max(df_who$date, na.rm = TRUE)
 leafmap <- make_map(df_trends, sf_world, latest_date)
 # local output folder
 local_output <- "/home/epicentre/static_reports/covid_map"

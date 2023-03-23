@@ -1,11 +1,12 @@
 
 make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
-  sf_df <- sf_world %>% 
-    dplyr::select(iso_a3, lon, lat) %>%  
+  sf_df <- sf_world %>%
+    dplyr::select(iso_a3, lon, lat) %>%
     dplyr::inner_join(
-      select(df_trends, country, iso_a3, cases, deaths, trend_cases = trend_cases_14d, trend_deaths = trend_deaths_14d), 
+      select(df_trends, country, iso_a3, cases, deaths, trend_cases = trend_cases_14d, trend_deaths = trend_deaths_14d),
       by = "iso_a3"
-    )
+    ) %>%
+    tidyr::drop_na(cases)
   
   tooltip <- glue::glue_data(
     sf_df,
@@ -33,7 +34,7 @@ make_map <- function(df_trends, sf_world, latest_date = Sys.Date()-1) {
       attribution = paste0(
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ', 
         'contributors &copy; <a href="https://carto.com/attributions">CARTO</a> ',  
-        '| JHU CSSE COVID-19 data as of ', latest_date, 
+        '| WHO COVID-19 data as of ', latest_date, 
         ' | Trend analysis and map: <a href="https://reports.msf.net/public/covid19/">Epicentre MSF</a>'
       )
     ) %>%
