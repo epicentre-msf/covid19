@@ -23,4 +23,4 @@ geo_ref <- countrycode::codelist_panel %>%
   tibble::as_tibble()
 
 usethis::use_data(sf_world, geo_ref, overwrite = TRUE)
-usethis::use_data(geo_ref, overwrite = TRUE)
+

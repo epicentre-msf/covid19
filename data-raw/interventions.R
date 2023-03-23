@@ -85,6 +85,13 @@ obj_lines <- readLines(con = "https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_P
 
 xl_path <- "https://orlagh.blob.core.windows.net/release/release_2021_12_14.xlsx"
 
+phsm_json <- jsonlite::fromJSON("https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM")
+df_phsm_raw <- readr::read_csv("https://frontdoor-l4uikgap6gz3m.azurefd.net/NCOV_PHM/CLEAN_PHSM?$format=csv")
+
+count(df_phsm_raw, COUNTRY_TERRITORY_AREA, sort = TRUE)
+
+write_excel_csv(df_phsm_raw, "~/Downloads/covid_phsm.csv")
+
 tibble::as_tibble(phsm_json$value) %>% 
   janitor::clean_names() %>% 
   dplyr::select(

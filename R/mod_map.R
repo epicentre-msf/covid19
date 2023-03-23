@@ -261,6 +261,8 @@ mod_map_server <- function(input, output, session) {
 
     p <- highchart() %>%
       hc_add_series_list(series) %>%
+      hc_title(text = NULL) %>%
+      hc_caption(enabled = FALSE) %>% 
       hc_xAxis(type = opts$xAxis_type, title = list(text = as.character(mapping$x)), categories = opts$xAxis_categories) %>%
       hc_yAxis(type = opts$yAxis_type, title = list(text = as.character(mapping$y)), categories = opts$yAxis_categories) %>%
       hc_plotOptions(
